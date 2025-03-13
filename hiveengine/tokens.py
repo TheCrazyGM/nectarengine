@@ -21,7 +21,7 @@ class Tokens(list):
 
     def get_token_list(self):
         """Returns all available token as list"""
-        tokens = self.api.find("tokens", "tokens", query={})
+        tokens = self.api.find_all("tokens", "tokens", query={})
         return tokens
 
     def get_token(self, symbol):
