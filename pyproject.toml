@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling", "wheel"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hiveengine"
+version = "0.2.3"
+description = "command line tool and python library for sending hive engine tokens"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT License"}
+authors = [
+    {name = "Holger Nahrstaedt", email = "nahrstaedt@gmail.com"}
+]
+maintainers = [
+    {name = "Michael Garcia", email = "thecrazygm@gmail.com"}
+]
+keywords = ["hive", "tools", "nft"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+]
+dependencies = [
+    "beem",
+    "requests",
+    "six",
+]
+
+[project.scripts]
+hiveengine = "hiveengine.cli:cli"
+
+[project.urls]
+Homepage = "https://github.com/thecrazygm/hiveengine"
+Documentation = "https://hiveengine.readthedocs.io"
+"Bug Tracker" = "https://github.com/thecrazygm/hiveengine/issues"
+
+[tool.uv.sources]
+beem = { git = "https://github.com/thecrazygm/beem" }
