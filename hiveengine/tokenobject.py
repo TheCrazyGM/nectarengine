@@ -49,6 +49,10 @@ class Token(dict):
         holder = self.api.find("tokens", "balances", query={"symbol": self.symbol}, limit=limit, offset=offset)
         return holder
 
+    def get_all_holders(self):
+        """Returns all token holders by looping through all pages"""
+        return self.api.find_all("tokens", "balances", query={"symbol": self.symbol})
+
     def get_market_info(self):
         """Returns market information"""
         metrics = self.api.find_one("market", "metrics", query={"symbol": self.symbol})
@@ -62,7 +66,15 @@ class Token(dict):
         holder = self.api.find("market", "buyBook", query={"symbol": self.symbol}, limit=limit, offset=offset)
         return holder
 
+    def get_all_buy_book(self):
+        """Returns the buy book by looping through all pages"""
+        return self.api.find_all("market", "buyBook", query={"symbol": self.symbol})
+
     def get_sell_book(self, limit=100, offset=0):
         """Returns the sell book"""
         holder = self.api.find("market", "sellBook", query={"symbol": self.symbol}, limit=limit, offset=offset)
         return holder
+
+    def get_all_sell_book(self):
+        """Returns the sell book by looping through all pages"""
+        return self.api.find_all("market", "sellBook", query={"symbol": self.symbol})
