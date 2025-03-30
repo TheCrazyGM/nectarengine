@@ -67,12 +67,12 @@ def unlock_wallet(stm, password=None, allow_wif=True):
             )
         try:
             stm.wallet.unlock(password)
-        except:
+        except Exception:
             try:
                 stm.wallet.setKeys([password])
                 print("Wif accepted!")
                 return True
-            except:
+            except Exception:
                 if allow_wif:
                     raise WrongMasterPasswordException(
                         "entered password is not a valid password/wif"

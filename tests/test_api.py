@@ -27,5 +27,5 @@ class Testcases(unittest.TestCase):
         result = api.find_one("tokens", "tokens")
         self.assertTrue(len(result) > 0)
 
-        # result = api.get_history("holger80", "FOODIE")
+        # result = api.get_history("thecrazygm", "INCOME")
         # self.assertTrue(len(result) > 0)

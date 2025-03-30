@@ -18,7 +18,7 @@ if __name__ == "__main__":
     dragon_token = wallet.get_token("DRAGON")
     if dragon_token is not None and float(dragon_token["balance"]) >= 0.01:
         print("balance %.2f" % float(dragon_token["balance"]))
-        print(wallet.transfer("holger80", 0.01, "DRAGON", "test"))
+        print(wallet.transfer("thecrazygm", 0.01, "DRAGON", "test"))
     else:
         print("Could not sent")
     time.sleep(15)

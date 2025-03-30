@@ -128,7 +128,7 @@ class Nft(dict):
         )
         return tx
 
-    def update_metadata(self, medadata):
+    def update_metadata(self, metadata):
         """Updates the metadata of a token.
 
         :param dict medadata: new medadata

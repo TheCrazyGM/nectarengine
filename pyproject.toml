@@ -1,59 +1,57 @@
-[build-system]
-requires = ["hatchling", "wheel"]
-build-backend = "hatchling.build"
-
 [project]
 name = "nectarengine"
-version = "0.0.1"
+version = "0.0.2"
 description = "command line tool and python library for sending hive engine tokens"
 readme = "README.md"
 requires-python = ">=3.12"
-license = {text = "MIT License"}
+license = { text = "MIT License" }
 authors = [
-    {name = "Michael Garcia", email = "thecrazygm@gmail.com"},
-    {name = "Holger Nahrstaedt", email = "nahrstaedt@gmail.com"}
+  { name = "Michael Garcia", email = "thecrazygm@gmail.com" },
+  { name = "Holger Nahrstaedt", email = "nahrstaedt@gmail.com" },
 ]
-maintainers = [
-    {name = "Michael Garcia", email = "thecrazygm@gmail.com"}
-]
-keywords = ["hive", "tools", "nft"]
+maintainers = [{ name = "Michael Garcia", email = "thecrazygm@gmail.com" }]
+keywords = ["hive", "nft", "tools"]
 classifiers = [
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.5",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.5",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python",
 ]
 dependencies = [
-    "hive-nectar",
-    "requests",
-    "six",
-    "tomli>=2.2.1",
+  "hive-nectar",
+  "requests",
+  "six",
+  "tomli>=2.2.1",
 ]
+
+[project.urls]
+"Bug Tracker" = "https://github.com/thecrazygm/nectarengine/issues"
+Documentation = "https://nectarengine.readthedocs.io"
+Homepage = "https://github.com/thecrazygm/nectarengine"
 
 [project.scripts]
 nectarengine = "nectarengine.cli:cli"
 
-[project.urls]
-Homepage = "https://github.com/thecrazygm/nectarengine"
-Documentation = "https://nectarengine.readthedocs.io"
-"Bug Tracker" = "https://github.com/thecrazygm/nectarengine/issues"
+[build-system]
+requires = ["hatchling", "wheel"]
+build-backend = "hatchling.build"
 
-[tool.uv.sources]
-hive-nectar = { git = "https://github.com/thecrazygm/hive-nectar" }
-nectarengine = { git = "https://github.com/thecrazygm/nectarengine" }
+[tool.mypy]
+python_version = ">3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
 
-[tool.uv]
-default-groups = [ ]
-
-[tool.pytest]
+[tool.pytest.ini_options]
+python_files = ["test_*.py"]
 testpaths = ["tests"]
-python_files = "test_*.py"
 
 [tool.ruff]
 target-version = "py312"
@@ -67,26 +65,26 @@ indent-style = "space"
 select = ["E", "F", "W", "I"]
 ignore = ["E501"]
 exclude = [
-    ".tox",
-    ".git",
-    "__pycache__",
-    "docs/source/conf.py",
-    "build",
-    "dist",
-    "tests/fixtures/*",
-    "*.pyc",
-    "*.egg-info",
-    ".cache",
-    ".eggs",
+  ".tox",
+  ".git",
+  "__pycache__",
+  "docs/source/conf.py",
+  "build",
+  "dist",
+  "tests/fixtures/*",
+  "*.pyc",
+  "*.egg-info",
+  ".cache",
+  ".eggs",
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["E402"]
 "**/{tests,docs,tools}/*" = ["E402"]
 
-[tool.mypy]
-python_version = ">3.12"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
+[tool.uv]
+default-groups = []
+
+[tool.uv.sources]
+hive-nectar = { git = "https://github.com/thecrazygm/hive-nectar" }
+nectarengine = { git = "https://github.com/thecrazygm/nectarengine" }
