@@ -25,7 +25,6 @@ dependencies = [
   "hive-nectar",
   "requests",
   "six",
-  "tomli",
 ]
 
 [project.urls]
@@ -86,3 +85,9 @@ default-groups = []
 [tool.uv.sources]
 hive-nectar = { git = "https://github.com/thecrazygm/hive-nectar" }
 nectarengine = { git = "https://github.com/thecrazygm/nectarengine" }
+
+[dependency-groups]
+dev = [
+  "tomli",
+  "pytest",
+]
