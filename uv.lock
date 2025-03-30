@@ -148,7 +148,7 @@ wheels = [
 
 [[package]]
 name = "nectarengine"
-version = "0.0.1"
+version = "0.0.2"
 source = { editable = "." }
 dependencies = [
     { name = "hive-nectar" },
@@ -162,7 +162,7 @@ requires-dist = [
     { name = "hive-nectar", git = "https://github.com/thecrazygm/hive-nectar" },
     { name = "requests" },
     { name = "six" },
-    { name = "tomli", specifier = ">=2.2.1" },
+    { name = "tomli" },
 ]
 
 [[package]]
