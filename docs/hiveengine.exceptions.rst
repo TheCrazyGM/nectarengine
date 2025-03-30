@@ -1,7 +1,7 @@
-hiveengine\.exceptions
+nectarengine\.exceptions
 ======================
 
-.. automodule:: hiveengine.exceptions
+.. automodule:: nectarengine.exceptions
     :members:
     :undoc-members:
     :show-inheritance:

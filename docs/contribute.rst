@@ -1,4 +1,4 @@
-Contributing to hiveengine
+Contributing to nectarengine
 ==========================
 
 We welcome your contributions to our project.
@@ -6,9 +6,9 @@ We welcome your contributions to our project.
 Repository
 ----------
 
-The repository of beem is currently located at:
+The repository of nectar is currently located at:
 
-    https://github.com/holgern/hiveengine
+    https://github.com/holgern/nectarengine
 
 Flow
 ----

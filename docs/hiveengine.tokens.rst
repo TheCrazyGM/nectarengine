@@ -1,7 +1,7 @@
-hiveengine\.tokens
+nectarengine\.tokens
 ==================
 
-.. automodule:: hiveengine.tokens
+.. automodule:: nectarengine.tokens
     :members:
     :undoc-members:
     :show-inheritance:

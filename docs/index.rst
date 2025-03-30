@@ -1,4 +1,4 @@
-Welcome to hiveengine's documentation!
+Welcome to nectarengine's documentation!
 ======================================
 
 General

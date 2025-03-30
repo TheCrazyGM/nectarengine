@@ -1,17 +1,17 @@
 Modules
 =======
 
-hiveengine Modules
+nectarengine Modules
 ------------------
 
 .. toctree::
 
-   hiveengine.api
-   hiveengine.collection
-   hiveengine.exceptions
-   hiveengine.market
-   hiveengine.nft
-   hiveengine.rpc
-   hiveengine.tokenobject
-   hiveengine.tokens
-   hiveengine.wallet
+   nectarengine.api
+   nectarengine.collection
+   nectarengine.exceptions
+   nectarengine.market
+   nectarengine.nft
+   nectarengine.rpc
+   nectarengine.tokenobject
+   nectarengine.tokens
+   nectarengine.wallet

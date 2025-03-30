@@ -2,7 +2,7 @@ autobahn>=0.14
 future
 ecdsa
 requests
-beem
+nectar
 pyyaml
 pytest
 pytest-mock

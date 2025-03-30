@@ -1,43 +1,39 @@
 # This Python file uses the following encoding: utf-8
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import bytes, int, str
-from beem import Hive
-from beem.account import Account
-from beem.nodelist import NodeList
-from beem.utils import formatTimeString, addTzInfo
-from beem.blockchain import Blockchain
-from beem.exceptions import WrongMasterPasswordException
-from hiveengine.api import Api
-from hiveengine.tokens import Tokens
-from hiveengine.tokenobject import Token
-from hiveengine.market import Market
-from hiveengine.nftmarket import NftMarket
-from hiveengine.wallet import Wallet
-from hiveengine.nfts import Nfts
-from hiveengine.nft import Nft
-from hiveengine.collection import Collection
-from prettytable import PrettyTable
-import time
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import json
+import logging
+import os
+import re
+import sys
+import time
+from builtins import int, str
+from datetime import datetime
+
 import click
 from click_shell import shell
-import logging
-import sys
-import os
-import io
-import argparse
-import re
-import six
-from datetime import datetime
-from beem.instance import set_shared_blockchain_instance, shared_blockchain_instance
-from hiveengine.version import version as __version__
+from nectar import Hive
+from nectar.exceptions import WrongMasterPasswordException
+from nectar.instance import set_shared_blockchain_instance, shared_blockchain_instance
+from nectar.nodelist import NodeList
+from prettytable import PrettyTable
+
+from nectarengine.api import Api
+from nectarengine.collection import Collection
+from nectarengine.market import Market
+from nectarengine.nft import Nft
+from nectarengine.nftmarket import NftMarket
+from nectarengine.nfts import Nfts
+from nectarengine.tokenobject import Token
+from nectarengine.tokens import Tokens
+from nectarengine.version import version as __version__
+from nectarengine.wallet import Wallet
+
 click.disable_unicode_literals_warning = True
 log = logging.getLogger(__name__)
 try:
     import keyring
+
     if not isinstance(keyring.get_keyring(), keyring.backends.fail.Keyring):
         KEYRING_AVAILABLE = True
     else:
@@ -53,33 +49,43 @@ def unlock_wallet(stm, password=None, allow_wif=True):
         return True
     password_storage = stm.config["password_storage"]
     if not password and KEYRING_AVAILABLE and password_storage == "keyring":
-        password = keyring.get_password("beem", "wallet")
+        password = keyring.get_password("nectar", "wallet")
     if not password and password_storage == "environment" and "UNLOCK" in os.environ:
         password = os.environ.get("UNLOCK")
     if bool(password):
         stm.wallet.unlock(password)
     else:
         if allow_wif:
-            password = click.prompt("Password to unlock wallet or posting/active wif", confirmation_prompt=False, hide_input=True)
+            password = click.prompt(
+                "Password to unlock wallet or posting/active wif",
+                confirmation_prompt=False,
+                hide_input=True,
+            )
         else:
-            password = click.prompt("Password to unlock wallet", confirmation_prompt=False, hide_input=True)
+            password = click.prompt(
+                "Password to unlock wallet", confirmation_prompt=False, hide_input=True
+            )
         try:
             stm.wallet.unlock(password)
         except:
             try:
                 stm.wallet.setKeys([password])
                 print("Wif accepted!")
-                return True                
+                return True
             except:
                 if allow_wif:
-                    raise WrongMasterPasswordException("entered password is not a valid password/wif")
+                    raise WrongMasterPasswordException(
+                        "entered password is not a valid password/wif"
+                    )
                 else:
                     raise WrongMasterPasswordException("entered password is not a valid password")
 
     if stm.wallet.locked():
         if password_storage == "keyring" or password_storage == "environment":
             print("Wallet could not be unlocked with %s!" % password_storage)
-            password = click.prompt("Password to unlock wallet", confirmation_prompt=False, hide_input=True)
+            password = click.prompt(
+                "Password to unlock wallet", confirmation_prompt=False, hide_input=True
+            )
             if bool(password):
                 unlock_wallet(stm, password=password)
                 if not stm.wallet.locked():
@@ -92,21 +98,21 @@ def unlock_wallet(stm, password=None, allow_wif=True):
         return True
 
 
-@shell(prompt='hiveengine> ', intro='Starting hiveengine... (use help to list all commands)', chain=True)
+@shell(
+    prompt="nectarengine> ",
+    intro="Starting nectarengine... (use help to list all commands)",
+    chain=True,
+)
 # click.group(chain=True)
-@click.option(
-    '--no-broadcast', '-d', is_flag=True, default=False, help="Do not broadcast")
-@click.option(
-    '--verbose', '-v', default=3, help='Verbosity')
+@click.option("--no-broadcast", "-d", is_flag=True, default=False, help="Do not broadcast")
+@click.option("--verbose", "-v", default=3, help="Verbosity")
 @click.version_option(version=__version__)
 def cli(no_broadcast, verbose):
     # Logging
     log = logging.getLogger(__name__)
-    verbosity = ["critical", "error", "warn", "info", "debug"][int(
-        min(verbose, 4))]
+    verbosity = ["critical", "error", "warn", "info", "debug"][int(min(verbose, 4))]
     log.setLevel(getattr(logging, verbosity.upper()))
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     ch = logging.StreamHandler()
     ch.setLevel(getattr(logging, verbosity.upper()))
     ch.setFormatter(formatter)
@@ -114,20 +120,20 @@ def cli(no_broadcast, verbose):
     debug = verbose > 0
     stm = Hive(
         nobroadcast=no_broadcast,
-        )
+    )
     set_shared_blockchain_instance(stm)
     pass
 
 
 @cli.command()
-@click.argument('objects', nargs=-1)
+@click.argument("objects", nargs=-1)
 def info(objects):
-    """ Show basic blockchain info
+    """Show basic blockchain info
 
-        General information about hive-engine, a block, an account, a token,
-        and a transaction id
+    General information about hive-engine, a block, an account, a token,
+    and a transaction id
     """
-    stm = None   
+    stm = None
     api = Api()
 
     if not objects:
@@ -166,8 +172,7 @@ def info(objects):
                 t.add_row(["sender", trx["sender"]])
                 t.add_row(["transactionId", trx["transactionId"]])
                 print(t.get_string())
-        elif re.match("^[A-Z0-9\-\._]{1,16}$", obj):
-            
+        elif re.match(r"^[A-Z0-9\-\._]{1,16}$", obj):
             tokens = Tokens()
             nfts = Nfts()
             token = tokens.get_token(obj)
@@ -187,7 +192,7 @@ def info(objects):
                         if "icon" in metadata:
                             t.add_row(["metadata_icon", metadata["icon"]])
                         if "desc" in metadata:
-                            t.add_row(["metadata_desc", metadata["desc"]])            
+                            t.add_row(["metadata_desc", metadata["desc"]])
                     else:
                         t.add_row([key, token[key]])
                 market_info = token.get_market_info()
@@ -215,22 +220,49 @@ def info(objects):
                         t.add_row([key, list(properties.keys())])
                     else:
                         t.add_row([key, nft[key]])
-              
+
                 print(t.get_string())
                 print("%s properties" % obj)
-                t = PrettyTable(["Property", "type", "isReadOnly", "authorizedEditingAccounts", "authorizedEditingContracts"])
-                t.align = "l"                
+                t = PrettyTable(
+                    [
+                        "Property",
+                        "type",
+                        "isReadOnly",
+                        "authorizedEditingAccounts",
+                        "authorizedEditingContracts",
+                    ]
+                )
+                t.align = "l"
                 for prop in properties:
-                    t.add_row([prop, properties[prop]["type"], properties[prop]["isReadOnly"], properties[prop]["authorizedEditingAccounts"], properties[prop]["authorizedEditingContracts"]])                  
+                    t.add_row(
+                        [
+                            prop,
+                            properties[prop]["type"],
+                            properties[prop]["isReadOnly"],
+                            properties[prop]["authorizedEditingAccounts"],
+                            properties[prop]["authorizedEditingContracts"],
+                        ]
+                    )
                 print(t)
-        elif re.match("^[a-zA-Z0-9\-\._]{2,16}$", obj):
+        elif re.match(r"^[a-zA-Z0-9\-\._]{2,16}$", obj):
             print("Token Wallet: %s" % obj)
             if stm is None:
                 nodelist = NodeList()
                 nodelist.update_nodes()
-                stm = Hive(node=nodelist.get_hive_nodes())                
+                stm = Hive(node=nodelist.get_hive_nodes())
             wallet = Wallet(obj, blockchain_instance=stm)
-            t = PrettyTable(["id", "symbol", "balance", "stake", "pendingUnstake", "delegationsIn", "delegationsOut", "pendingUndelegations"])
+            t = PrettyTable(
+                [
+                    "id",
+                    "symbol",
+                    "balance",
+                    "stake",
+                    "pendingUnstake",
+                    "delegationsIn",
+                    "delegationsOut",
+                    "pendingUndelegations",
+                ]
+            )
             t.align = "l"
             for token in wallet:
                 if "stake" in token:
@@ -241,8 +273,18 @@ def info(objects):
                     pendingUnstake = token["pendingUnstake"]
                 else:
                     pendingUnstake = "-"
-                t.add_row([token["_id"], token["symbol"], token["balance"], stake, pendingUnstake, token["delegationsIn"],
-                           token["delegationsOut"], token["pendingUndelegations"]])
+                t.add_row(
+                    [
+                        token["_id"],
+                        token["symbol"],
+                        token["balance"],
+                        stake,
+                        pendingUnstake,
+                        token["delegationsIn"],
+                        token["delegationsOut"],
+                        token["pendingUndelegations"],
+                    ]
+                )
             print(t.get_string(sortby="id"))
         elif len(obj.split("-")[0]) == 40:
             print("Transaction Id: %s" % obj)
@@ -262,13 +304,12 @@ def info(objects):
             t.add_row(["refHiveBlockNumber", trx["refHiveBlockNumber"]])
             t.add_row(["sender", trx["sender"]])
             t.add_row(["transactionId", trx["transactionId"]])
-            print(t.get_string())            
+            print(t.get_string())
+
 
 @cli.command()
 def tokenlist():
-    """ Show list of all tokens
-
-    """
+    """Show list of all tokens"""
     tokens = Tokens()
     t = PrettyTable(["id", "Symbol", "name"])
     t.align = "l"
@@ -279,9 +320,7 @@ def tokenlist():
 
 @cli.command()
 def nftlist():
-    """ Show list of all NFTs
-
-    """
+    """Show list of all NFTs"""
     nfts = Nfts()
     t = PrettyTable(["id", "Symbol", "Name"])
     t.align = "l"
@@ -292,9 +331,7 @@ def nftlist():
 
 @cli.command()
 def nftparams():
-    """ Show params of all NFTs
-
-    """
+    """Show params of all NFTs"""
     nfts = Nfts()
     t = PrettyTable(["key", "value"])
     t.align = "l"
@@ -305,9 +342,9 @@ def nftparams():
 
 
 @cli.command()
-@click.argument('account', nargs=1)
-@click.argument('symbol', nargs=-1)
-@click.option('--sort-by-id', '-s', is_flag=True, default=False, help="Sort NFTs by their ID")
+@click.argument("account", nargs=1)
+@click.argument("symbol", nargs=-1)
+@click.option("--sort-by-id", "-s", is_flag=True, default=False, help="Sort NFTs by their ID")
 def collection(account, symbol, sort_by_id):
     """Return NFT collection for an account"""
     if len(symbol) == 0:
@@ -319,14 +356,14 @@ def collection(account, symbol, sort_by_id):
             continue
         nft = Nft(s)
         groupBy = nft["groupBy"]
-        
+
         print("NFT: %s" % s)
         if sort_by_id:
-            table_header = ['_id', 'lockedTokens']
+            table_header = ["_id", "lockedTokens"]
             for prop in nft.properties[:3]:
                 table_header.append(prop)
             t = PrettyTable(table_header)
-            t.align = "l"        
+            t.align = "l"
             for nft_object in collection[s]:
                 row = [nft_object["_id"], nft_object["lockedTokens"]]
                 for prop in nft.properties[:3]:
@@ -339,7 +376,7 @@ def collection(account, symbol, sort_by_id):
         else:
             nft_id_by_prop = {}
             nft_prop = {}
-    
+
             for nft_obj in collection[s]:
                 ident = ""
                 for g in groupBy:
@@ -348,12 +385,12 @@ def collection(account, symbol, sort_by_id):
                 if ident[:-3] in nft_id_by_prop:
                     nft_id_by_prop[ident[:-3]].append(str(nft_obj["_id"]))
                 else:
-                    nft_id_by_prop[ident[:-3]] = [str(nft_obj["_id"])]     
+                    nft_id_by_prop[ident[:-3]] = [str(nft_obj["_id"])]
                     nft_prop[ident[:-3]] = nft_obj["properties"]
-            table_header = ['nftIds']
-            
+            table_header = ["nftIds"]
+
             for prop in nft.properties[:3]:
-                table_header.append(prop)            
+                table_header.append(prop)
             t = PrettyTable(table_header)
             t.align = "l"
             t._max_width = {"nftIds": 60}
@@ -367,8 +404,9 @@ def collection(account, symbol, sort_by_id):
                 t.add_row(row)
             print(t)
 
+
 @cli.command()
-@click.argument('symbol', nargs=-1)
+@click.argument("symbol", nargs=-1)
 def nftinfo(symbol):
     """Returns information about an NFT symbol"""
     if len(symbol) == 0:
@@ -379,14 +417,22 @@ def nftinfo(symbol):
         print("NFT: %s" % s)
         t = PrettyTable(["key", "value"])
         t._max_width = {"value": 60}
-        t.align = "l"        
+        t.align = "l"
         for key in list(nft.keys()):
             if key != "properties":
                 t.add_row([key, nft[key]])
             else:
                 t.add_row([key, nft.properties])
         print(t)
-        t = PrettyTable(["property", "type", "isReadOnly", "authorizedEditingAccounts", "authorizedEditingContracts"])
+        t = PrettyTable(
+            [
+                "property",
+                "type",
+                "isReadOnly",
+                "authorizedEditingAccounts",
+                "authorizedEditingContracts",
+            ]
+        )
         t._max_width = {"value": 60}
         t.align = "l"
         for prop in nft.properties:
@@ -396,9 +442,10 @@ def nftinfo(symbol):
             t.add_row(value)
         print(t)
 
+
 @cli.command()
-@click.argument('symbol', nargs=1)
-@click.argument('nftid', nargs=-1)
+@click.argument("symbol", nargs=1)
+@click.argument("nftid", nargs=-1)
 def nft(symbol, nftid):
     """Returns information about an NFT ID"""
     nft = Nft(symbol)
@@ -406,7 +453,7 @@ def nft(symbol, nftid):
         groupBy = nft["groupBy"]
         max_id = nft["supply"]
         nft_count = {}
-        
+
         for _id in range(max_id):
             nft_obj = nft.get_id(int(_id) + 1)
             ident = ""
@@ -420,26 +467,32 @@ def nft(symbol, nftid):
         t = PrettyTable(["type", "N", "percentage"])
         t.align = "l"
         for key in nft_count:
-            t.add_row([key, nft_count[key], round(nft_count[key]/max_id*100, 2)])
+            t.add_row([key, nft_count[key], round(nft_count[key] / max_id * 100, 2)])
         print(t)
-            
+
     else:
         t = PrettyTable(["_id", "account", "ownedBy", "lockedTokens", "properties"])
         t._max_width = {"properties": 60}
-        t.align = "l"    
+        t.align = "l"
         for _id in nftid:
             nft_obj = nft.get_id(int(_id))
-            t.add_row([_id, nft_obj["account"], nft_obj["ownedBy"], nft_obj["lockedTokens"], nft_obj["properties"]])
+            t.add_row(
+                [
+                    _id,
+                    nft_obj["account"],
+                    nft_obj["ownedBy"],
+                    nft_obj["lockedTokens"],
+                    nft_obj["properties"],
+                ]
+            )
         print(t)
 
 
 @cli.command()
-@click.argument('symbol', nargs=1)
-@click.option('--top', '-t', help='Show only the top n accounts', default=50)
+@click.argument("symbol", nargs=1)
+@click.option("--top", "-t", help="Show only the top n accounts", default=50)
 def richlist(symbol, top):
-    """ Shows the richlist of a token
-
-    """
+    """Shows the richlist of a token"""
     token = Token(symbol)
     holder = token.get_holder()
     market_info = token.get_market_info()
@@ -447,18 +500,24 @@ def richlist(symbol, top):
     sorted_holder = sorted(holder, key=lambda account: float(account["balance"]), reverse=True)
     t = PrettyTable(["Balance", "Account", "Value [HIVE]"])
     t.align = "l"
-    for balance in sorted_holder[:int(top)]:
-        t.add_row([balance["balance"], balance["account"], "%.3f" % (float(balance["balance"]) * last_price)])
+    for balance in sorted_holder[: int(top)]:
+        t.add_row(
+            [
+                balance["balance"],
+                balance["account"],
+                "%.3f" % (float(balance["balance"]) * last_price),
+            ]
+        )
     print(t.get_string())
 
 
 @cli.command()
-@click.argument('to', nargs=1)
-@click.argument('amount', nargs=1, required=False)
-@click.argument('token', nargs=1, required=False)
-@click.argument('memo', nargs=1, required=False)
-@click.option('--memos', '-m', help="Can be used when all tokens should be send")
-@click.option('--account', '-a', help='Transfer from this account')
+@click.argument("to", nargs=1)
+@click.argument("amount", nargs=1, required=False)
+@click.argument("token", nargs=1, required=False)
+@click.argument("memo", nargs=1, required=False)
+@click.option("--memos", "-m", help="Can be used when all tokens should be send")
+@click.option("--account", "-a", help="Transfer from this account")
 def transfer(to, amount, token, memo, memos, account):
     """Transfer a token"""
     stm = shared_blockchain_instance()
@@ -470,18 +529,18 @@ def transfer(to, amount, token, memo, memos, account):
     if not account:
         account = stm.config["default_account"]
     if not bool(memo):
-        memo = ''
+        memo = ""
     if not bool(memos):
-        memos = ''
+        memos = ""
     if not unlock_wallet(stm):
         return
-    
+
     wallet = Wallet(account, blockchain_instance=stm)
     if amount is None and token is None:
         token = amount
         amount = 0
         tokens = Tokens()
-        
+
         for t in wallet:
             token = t["symbol"]
             amount = float(t["balance"])
@@ -498,8 +557,10 @@ def transfer(to, amount, token, memo, memos, account):
                     price = last_price
                 else:
                     price = highest_bid
-                hive_amount = price*amount
-                print("transfer %.8f %s (value %.3f HIVE) to %s?" % (amount, token, hive_amount, to))
+                hive_amount = price * amount
+                print(
+                    "transfer %.8f %s (value %.3f HIVE) to %s?" % (amount, token, hive_amount, to)
+                )
             ret = input("continue [y/n]?")
             if ret not in ["y", "yes"]:
                 continue
@@ -517,7 +578,7 @@ def transfer(to, amount, token, memo, memos, account):
             print("Amount of %s is 0" % token)
             return
         tokens = Tokens()
-        token_obj = tokens.get_token(token)   
+        token_obj = tokens.get_token(token)
         market_info = token_obj.get_market_info()
         last_price = float(market_info["lastPrice"])
         highest_bid = float(market_info["highestBid"])
@@ -525,7 +586,7 @@ def transfer(to, amount, token, memo, memos, account):
             price = last_price
         else:
             price = highest_bid
-        hive_amount = price*amount
+        hive_amount = price * amount
         print("transfer %.8f %s (value %.3f HIVE) to %s?" % (amount, token, hive_amount, to))
         ret = input("continue [y/n]?")
         if ret not in ["y", "yes"]:
@@ -537,10 +598,10 @@ def transfer(to, amount, token, memo, memos, account):
 
 
 @cli.command()
-@click.argument('to', nargs=1)
-@click.argument('amount', nargs=1)
-@click.argument('token', nargs=1)
-@click.option('--account', '-a', help='Transfer from this account')
+@click.argument("to", nargs=1)
+@click.argument("amount", nargs=1)
+@click.argument("token", nargs=1)
+@click.option("--account", "-a", help="Transfer from this account")
 def issue(to, amount, token, account):
     """Issue a token"""
     stm = shared_blockchain_instance()
@@ -560,10 +621,10 @@ def issue(to, amount, token, account):
 
 
 @cli.command()
-@click.argument('amount', nargs=1, required=False)
-@click.argument('token', nargs=1, required=False)
-@click.option('--account', '-a', help='Stake token from this account')
-@click.option('--receiver', '-r', help='Stake to this account (default is sender account)')
+@click.argument("amount", nargs=1, required=False)
+@click.argument("token", nargs=1, required=False)
+@click.option("--account", "-a", help="Stake token from this account")
+@click.option("--receiver", "-r", help="Stake to this account (default is sender account)")
 def stake(amount, token, account, receiver):
     """stake a token / all tokens"""
     stm = shared_blockchain_instance()
@@ -583,7 +644,7 @@ def stake(amount, token, account, receiver):
         token = amount
         amount = 0
         tokens = Tokens()
-        
+
         for t in wallet:
             token = t["symbol"]
             amount = float(t["balance"])
@@ -602,7 +663,7 @@ def stake(amount, token, account, receiver):
                     price = last_price
                 else:
                     price = highest_bid
-                hive_amount = price*amount
+                hive_amount = price * amount
                 print("stake %.8f %s (value %.3f HIVE)?" % (amount, token, hive_amount))
             ret = input("continue [y/n]?")
             if ret not in ["y", "yes"]:
@@ -624,7 +685,7 @@ def stake(amount, token, account, receiver):
         token_obj = tokens.get_token(token)
         if not token_obj["stakingEnabled"]:
             print("%s is not stakable" % token)
-            return        
+            return
         market_info = token_obj.get_market_info()
         last_price = float(market_info["lastPrice"])
         highest_bid = float(market_info["highestBid"])
@@ -632,7 +693,7 @@ def stake(amount, token, account, receiver):
             price = last_price
         else:
             price = highest_bid
-        hive_amount = price*amount
+        hive_amount = price * amount
         print("stake %.8f %s (value %.3f HIVE)?" % (amount, token, hive_amount))
         ret = input("continue [y/n]?")
         if ret not in ["y", "yes"]:
@@ -644,9 +705,9 @@ def stake(amount, token, account, receiver):
 
 
 @cli.command()
-@click.argument('amount', nargs=1, required=False)
-@click.argument('token', nargs=1, required=False)
-@click.option('--account', '-a', help='Transfer from this account')
+@click.argument("amount", nargs=1, required=False)
+@click.argument("token", nargs=1, required=False)
+@click.option("--account", "-a", help="Transfer from this account")
 def unstake(amount, token, account):
     """unstake a token / all tokens"""
     stm = shared_blockchain_instance()
@@ -664,7 +725,7 @@ def unstake(amount, token, account):
         token = amount
         amount = 0
         tokens = Tokens()
-        
+
         for t in wallet:
             token = t["symbol"]
             amount = float(t["balance"])
@@ -684,7 +745,7 @@ def unstake(amount, token, account):
                     price = last_price
                 else:
                     price = highest_bid
-                hive_amount = price*stake
+                hive_amount = price * stake
                 print("unstake %.8f %s (value %.3f HIVE)?" % (stake, token, hive_amount))
             ret = input("continue [y/n]?")
             if ret not in ["y", "yes"]:
@@ -706,7 +767,7 @@ def unstake(amount, token, account):
         token_obj = tokens.get_token(token)
         if not token_obj["stakingEnabled"]:
             print("%s is not stakable" % token)
-            return        
+            return
         market_info = token_obj.get_market_info()
         last_price = float(market_info["lastPrice"])
         highest_bid = float(market_info["highestBid"])
@@ -714,20 +775,20 @@ def unstake(amount, token, account):
             price = last_price
         else:
             price = highest_bid
-        hive_amount = price*amount
+        hive_amount = price * amount
         print("unstake %.8f %s (value %.3f HIVE)?" % (amount, token, hive_amount))
         ret = input("continue [y/n]?")
         if ret not in ["y", "yes"]:
             return
-    
+
     tx = wallet.unstake(amount, token)
     tx = json.dumps(tx, indent=4)
     print(tx)
 
 
 @cli.command()
-@click.argument('trx_id', nargs=1)
-@click.option('--account', '-a', help='Transfer from this account')
+@click.argument("trx_id", nargs=1)
+@click.option("--account", "-a", help="Transfer from this account")
 def cancel_unstake(account, trx_id):
     """unstake a token"""
     stm = shared_blockchain_instance()
@@ -747,8 +808,8 @@ def cancel_unstake(account, trx_id):
 
 
 @cli.command()
-@click.argument('amount', nargs=1)
-@click.option('--account', '-a', help='withdraw from this account')
+@click.argument("amount", nargs=1)
+@click.option("--account", "-a", help="withdraw from this account")
 def withdraw(amount, account):
     """Widthdraw SWAP.HIVE to account as HIVE."""
     stm = shared_blockchain_instance()
@@ -768,8 +829,8 @@ def withdraw(amount, account):
 
 
 @cli.command()
-@click.argument('amount', nargs=1)
-@click.option('--account', '-a', help='withdraw from this account')
+@click.argument("amount", nargs=1)
+@click.option("--account", "-a", help="withdraw from this account")
 def deposit(amount, account):
     """Deposit HIVE to market in exchange for SWAP.HIVE."""
     stm = shared_blockchain_instance()
@@ -789,14 +850,12 @@ def deposit(amount, account):
 
 
 @cli.command()
-@click.argument('amount', nargs=1)
-@click.argument('token', nargs=1)
-@click.argument('price', nargs=1)
-@click.option('--account', '-a', help='Buy with this account (defaults to "default_account")')
+@click.argument("amount", nargs=1)
+@click.argument("token", nargs=1)
+@click.argument("price", nargs=1)
+@click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
 def buy(amount, token, price, account):
-    """Put a buy-order for a token to the hive-engine market
-
-    """
+    """Put a buy-order for a token to the hive-engine market"""
     stm = shared_blockchain_instance()
     if stm.rpc is not None:
         stm.rpc.rpcconnect()
@@ -814,14 +873,12 @@ def buy(amount, token, price, account):
 
 
 @cli.command()
-@click.argument('amount', nargs=1, required=False)
-@click.argument('token', nargs=1, required=False)
-@click.argument('price', nargs=1, required=False)
-@click.option('--account', '-a', help='Buy with this account (defaults to "default_account")')
+@click.argument("amount", nargs=1, required=False)
+@click.argument("token", nargs=1, required=False)
+@click.argument("price", nargs=1, required=False)
+@click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
 def sell(amount, token, price, account):
-    """Put a sell-order for a token to the hive-engine market
-
-    """
+    """Put a sell-order for a token to the hive-engine market"""
     stm = shared_blockchain_instance()
     if stm.rpc is not None:
         stm.rpc.rpcconnect()
@@ -854,10 +911,13 @@ def sell(amount, token, price, account):
                 price = last_price
             else:
                 price = highest_bid
-            hive_amount = price*amount
+            hive_amount = price * amount
             if hive_amount < 0.001:
                 continue
-            print("%s: using %.8f as price to sell %.8f %s for %.8f HIVE" % (token, price, amount, token, hive_amount))
+            print(
+                "%s: using %.8f as price to sell %.8f %s for %.8f HIVE"
+                % (token, price, amount, token, hive_amount)
+            )
             ret = input("continue [y/n]?")
             if ret not in ["y", "yes"]:
                 continue
@@ -885,13 +945,14 @@ def sell(amount, token, price, account):
             price = last_price
         else:
             price = highest_bid
-        hive_amount = price*amount
-        print("using %.8f as price to sell %.8f %s for %.8f HIVE" % (price, amount, token, hive_amount))
+        hive_amount = price * amount
+        print(
+            "using %.8f as price to sell %.8f %s for %.8f HIVE"
+            % (price, amount, token, hive_amount)
+        )
         ret = input("continue [y/n]?")
         if ret not in ["y", "yes"]:
             return
-
-
 
     market = Market(blockchain_instance=stm)
     if not unlock_wallet(stm):
@@ -902,11 +963,9 @@ def sell(amount, token, price, account):
 
 
 @cli.command()
-@click.option('--account', '-a', help='Buy with this account (defaults to "default_account")')
+@click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
 def balance(account):
-    """Show token balance and value
-
-    """
+    """Show token balance and value"""
     stm = shared_blockchain_instance()
     if stm.rpc is not None:
         stm.rpc.rpcconnect()
@@ -920,7 +979,7 @@ def balance(account):
     tokens = Tokens()
     wallet = Wallet(account, blockchain_instance=stm)
     table = PrettyTable(["symbol", "balance", "stake", "liquid HIVE", "staked HIVE"])
-    table.align = "l"    
+    table.align = "l"
     sum_amount = 0
     sum_staked = 0
     for t in wallet:
@@ -937,8 +996,8 @@ def balance(account):
             price = last_price
         else:
             price = highest_bid
-        balance_hive = price*amount
-        stake_hive = price*stake
+        balance_hive = price * amount
+        stake_hive = price * stake
         sum_amount += balance_hive
         sum_staked += stake_hive
         if token_obj["stakingEnabled"]:
@@ -951,14 +1010,14 @@ def balance(account):
 
 
 @cli.command()
-@click.argument('order_type', nargs=1)
-@click.argument('order_id', nargs=1, required=False)
-@click.option('--account', '-a', help='Buy with this account (defaults to "default_account")')
-@click.option('--yes', '-y', help='Answer yes to all questions', is_flag=True, default=False)
+@click.argument("order_type", nargs=1)
+@click.argument("order_id", nargs=1, required=False)
+@click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
+@click.option("--yes", "-y", help="Answer yes to all questions", is_flag=True, default=False)
 def cancel(order_type, order_id, account, yes):
     """Cancel a buy/sell order
-    
-        order_type is either sell or buy
+
+    order_type is either sell or buy
     """
     stm = shared_blockchain_instance()
     if stm.rpc is not None:
@@ -976,13 +1035,23 @@ def cancel(order_type, order_id, account, yes):
         for t in wallet:
             token = t["symbol"]
             buy_book = market.get_buy_book(token, account)
-            sorted_buy_book = sorted(buy_book, key=lambda account: float(account["price"]), reverse=True)    
+            sorted_buy_book = sorted(
+                buy_book, key=lambda account: float(account["price"]), reverse=True
+            )
             for order in sorted_buy_book:
-                print("Cancel sell order with id: %s for %.8f %s at %s" % (order["_id"], float(order["quantity"]), token, float(order["price"])))
+                print(
+                    "Cancel sell order with id: %s for %.8f %s at %s"
+                    % (
+                        order["_id"],
+                        float(order["quantity"]),
+                        token,
+                        float(order["price"]),
+                    )
+                )
                 if not yes:
                     ret = input("continue [y/n]?")
                     if ret not in ["y", "yes"]:
-                        continue            
+                        continue
                 tx = market.cancel(account, order_type, int(order_id))
                 tx = json.dumps(tx, indent=4)
                 print(tx)
@@ -994,18 +1063,28 @@ def cancel(order_type, order_id, account, yes):
         for t in wallet:
             token = t["symbol"]
             sell_book = market.get_sell_book(token, account)
-            sorted_sell_book = sorted(sell_book, key=lambda account: float(account["price"]), reverse=True)    
+            sorted_sell_book = sorted(
+                sell_book, key=lambda account: float(account["price"]), reverse=True
+            )
             for order in sorted_sell_book:
-                print("Cancel sell order with id: %s for %.8f %s at %s" % (order["_id"], float(order["quantity"]), token, float(order["price"])))
+                print(
+                    "Cancel sell order with id: %s for %.8f %s at %s"
+                    % (
+                        order["_id"],
+                        float(order["quantity"]),
+                        token,
+                        float(order["price"]),
+                    )
+                )
                 if not yes:
                     ret = input("continue [y/n]?")
                     if ret not in ["y", "yes"]:
-                        continue            
+                        continue
                 tx = market.cancel(account, order_type, int(order_id))
                 tx = json.dumps(tx, indent=4)
                 print(tx)
                 if yes:
-                    time.sleep(4)                
+                    time.sleep(4)
         return
     tx = market.cancel(account, order_type, int(order_id))
     tx = json.dumps(tx, indent=4)
@@ -1013,12 +1092,10 @@ def cancel(order_type, order_id, account, yes):
 
 
 @cli.command()
-@click.argument('token', nargs=1, required=False)
-@click.option('--account', '-a', help='Buy with this account (defaults to "default_account")')
+@click.argument("token", nargs=1, required=False)
+@click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
 def buybook(token, account):
-    """Returns the buy book for the given token
-
-    """
+    """Returns the buy book for the given token"""
     stm = shared_blockchain_instance()
     if stm.rpc is not None:
         stm.rpc.rpcconnect()
@@ -1028,33 +1105,44 @@ def buybook(token, account):
     market = Market(blockchain_instance=stm)
     if token is None:
         if account is None:
-            account = stm.config["default_account"]        
+            account = stm.config["default_account"]
         wallet = Wallet(account, blockchain_instance=stm)
         table = PrettyTable(["token", "order_id", "account", "quantity", "price"])
-        table.align = "l"        
+        table.align = "l"
         for t in wallet:
             token = t["symbol"]
             buy_book = market.get_buy_book(token, account)
-            sorted_buy_book = sorted(buy_book, key=lambda account: float(account["price"]), reverse=True)    
+            sorted_buy_book = sorted(
+                buy_book, key=lambda account: float(account["price"]), reverse=True
+            )
             for order in sorted_buy_book:
-                table.add_row([token, order["_id"], order["account"], order["quantity"], order["price"]])   
-        print(table.get_string())   
+                table.add_row(
+                    [
+                        token,
+                        order["_id"],
+                        order["account"],
+                        order["quantity"],
+                        order["price"],
+                    ]
+                )
+        print(table.get_string())
     else:
         buy_book = market.get_buy_book(token, account)
-        sorted_buy_book = sorted(buy_book, key=lambda account: float(account["price"]), reverse=True)
+        sorted_buy_book = sorted(
+            buy_book, key=lambda account: float(account["price"]), reverse=True
+        )
         t = PrettyTable(["order_id", "account", "quantity", "price"])
         t.align = "l"
         for order in sorted_buy_book:
             t.add_row([order["_id"], order["account"], order["quantity"], order["price"]])
-        print(t.get_string())    
+        print(t.get_string())
 
 
 @cli.command()
-@click.argument('token', nargs=1, required=False)
-@click.option('--account', '-a', help='Buy with this account (defaults to "default_account")')
+@click.argument("token", nargs=1, required=False)
+@click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
 def sellbook(token, account):
-    """Returns the sell book for the given token
-    """
+    """Returns the sell book for the given token"""
     stm = shared_blockchain_instance()
     if stm.rpc is not None:
         stm.rpc.rpcconnect()
@@ -1064,41 +1152,79 @@ def sellbook(token, account):
     market = Market(blockchain_instance=stm)
     if token is None:
         if account is None:
-            account = stm.config["default_account"]        
+            account = stm.config["default_account"]
         wallet = Wallet(account, blockchain_instance=stm)
         table = PrettyTable(["token", "order_id", "account", "quantity", "price"])
-        table.align = "l"        
+        table.align = "l"
         for t in wallet:
             token = t["symbol"]
             sell_book = market.get_sell_book(token, account)
-            sorted_sell_book = sorted(sell_book, key=lambda account: float(account["price"]), reverse=False)  
+            sorted_sell_book = sorted(
+                sell_book, key=lambda account: float(account["price"]), reverse=False
+            )
             for order in sorted_sell_book:
-                table.add_row([token, order["_id"], order["account"], order["quantity"], order["price"]])   
-        print(table.get_string())   
-    else:    
+                table.add_row(
+                    [
+                        token,
+                        order["_id"],
+                        order["account"],
+                        order["quantity"],
+                        order["price"],
+                    ]
+                )
+        print(table.get_string())
+    else:
         sell_book = market.get_sell_book(token, account)
-        sorted_sell_book = sorted(sell_book, key=lambda account: float(account["price"]), reverse=False)
+        sorted_sell_book = sorted(
+            sell_book, key=lambda account: float(account["price"]), reverse=False
+        )
         t = PrettyTable(["order_id", "account", "quantity", "price"])
         t.align = "l"
         for order in sorted_sell_book:
             t.add_row([order["_id"], order["account"], order["quantity"], order["price"]])
-        print(t.get_string())  
+        print(t.get_string())
 
 
 @cli.command()
-@click.argument('symbol', nargs=1)
-@click.option('--account', '-a', help='Buy with this account (defaults to "default_account")')
-@click.option('--grouping', '-g', help='Can be set to a grouping parameter, or to parameter.value')
-@click.option('--value', '-v', help='Set property value, can be used when grouping is set to a property parameter')
-@click.option('--price-symbol', '-s', help='Limit to this price symbol')
-@click.option('--nft-id', '-n', help='Limit to this nft id')
-@click.option('--cheapest-only', '-c', help='Show only the cheapest open sell for each type', is_flag=True, default=False)
-@click.option('--min-hive', '-m', help='Show only NFT which have a higher price')
-@click.option('--limit', '-l', help='Limit to shown entries')
-@click.option('--interactive', '-i', help='Show only the cheapest open sell for each type', is_flag=True, default=False)
-def nftsellbook(symbol, account, grouping, value, price_symbol, nft_id, cheapest_only, min_hive, limit, interactive):
-    """Returns the sell book for the given symbol
-    """
+@click.argument("symbol", nargs=1)
+@click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
+@click.option("--grouping", "-g", help="Can be set to a grouping parameter, or to parameter.value")
+@click.option(
+    "--value",
+    "-v",
+    help="Set property value, can be used when grouping is set to a property parameter",
+)
+@click.option("--price-symbol", "-s", help="Limit to this price symbol")
+@click.option("--nft-id", "-n", help="Limit to this nft id")
+@click.option(
+    "--cheapest-only",
+    "-c",
+    help="Show only the cheapest open sell for each type",
+    is_flag=True,
+    default=False,
+)
+@click.option("--min-hive", "-m", help="Show only NFT which have a higher price")
+@click.option("--limit", "-l", help="Limit to shown entries")
+@click.option(
+    "--interactive",
+    "-i",
+    help="Show only the cheapest open sell for each type",
+    is_flag=True,
+    default=False,
+)
+def nftsellbook(
+    symbol,
+    account,
+    grouping,
+    value,
+    price_symbol,
+    nft_id,
+    cheapest_only,
+    min_hive,
+    limit,
+    interactive,
+):
+    """Returns the sell book for the given symbol"""
     stm = shared_blockchain_instance()
     if stm.rpc is not None:
         stm.rpc.rpcconnect()
@@ -1115,31 +1241,37 @@ def nftsellbook(symbol, account, grouping, value, price_symbol, nft_id, cheapest
     elif grouping is not None and len(grouping.split(".")) >= 2:
         grouping_name = grouping.split(".")[0]
         grouping_value = grouping.split(".")[1]
-    sell_book = market.get_sell_book(symbol, account, grouping_name, grouping_value, price_symbol, nft_id)
+    sell_book = market.get_sell_book(
+        symbol, account, grouping_name, grouping_value, price_symbol, nft_id
+    )
     new_sell_book = []
     market_info = {}
-    
+
     for order in sell_book:
         if order["priceSymbol"] != "SWAP.HIVE":
             if order["priceSymbol"] not in market_info:
                 token = Token(order["priceSymbol"])
                 market_info[order["priceSymbol"]] = token.get_market_info()
-            hive_price = float(market_info[order["priceSymbol"]]["lastPrice"]) * float(order["price"])
+            hive_price = float(market_info[order["priceSymbol"]]["lastPrice"]) * float(
+                order["price"]
+            )
             order["hive_price"] = hive_price
         else:
             order["hive_price"] = float(order["price"])
         if min_hive is not None and order["hive_price"] < float(min_hive):
-            continue            
+            continue
         new_sell_book.append(order)
-    sorted_sell_book = sorted(new_sell_book, key=lambda account: float(account["hive_price"]), reverse=False)
+    sorted_sell_book = sorted(
+        new_sell_book, key=lambda account: float(account["hive_price"]), reverse=False
+    )
     if limit is not None:
-        sorted_sell_book = sorted_sell_book[:int(limit)]
+        sorted_sell_book = sorted_sell_book[: int(limit)]
     name_str = ""
     for g in nft["groupBy"]:
-        name_str += g + " - "    
+        name_str += g + " - "
     t = PrettyTable(["nftId", "account", name_str[:-3], "price", "priceSymbol", "fee", "est. HIVE"])
     t.align = "l"
-    t._max_width = {name_str[:-3] : 40}
+    t._max_width = {name_str[:-3]: 40}
     market_info = {}
     cheapest_list = []
     nft_ids = []
@@ -1152,7 +1284,7 @@ def nftsellbook(symbol, account, grouping, value, price_symbol, nft_id, cheapest
         elif grouping in nft.properties and value is not None:
             nft_name = value
         elif grouping_value is not None:
-            nft_name = grouping_value        
+            nft_name = grouping_value
         else:
             nftId = nft.get_id(int(order["nftId"]))
             nft_name = ""
@@ -1166,8 +1298,18 @@ def nftsellbook(symbol, account, grouping, value, price_symbol, nft_id, cheapest
                 continue
             cheapest_list.append(nft_name)
         nft_ids.append(order["nftId"])
-        t.add_row([order["nftId"], order["account"], nft_name, order["price"], order["priceSymbol"], "%.2f %%" % (order["fee"]/100), hive_price])
-    print(t.get_string()) 
+        t.add_row(
+            [
+                order["nftId"],
+                order["account"],
+                nft_name,
+                order["price"],
+                order["priceSymbol"],
+                "%.2f %%" % (order["fee"] / 100),
+                hive_price,
+            ]
+        )
+    print(t.get_string())
     if interactive:
         ret = None
         while ret not in ["b", "c", "p", "a", "buy", "cancel", "change price", "about"]:
@@ -1177,7 +1319,7 @@ def nftsellbook(symbol, account, grouping, value, price_symbol, nft_id, cheapest
         account = input("Enter account name: ")
         market = NftMarket(blockchain_instance=stm)
         if not unlock_wallet(stm):
-            return        
+            return
         if ret in ["p", "change price"]:
             newprice = input("Enter new price: ")
             tx = market.change_price(symbol, account, list(nft_ids), newprice)
@@ -1194,13 +1336,16 @@ def nftsellbook(symbol, account, grouping, value, price_symbol, nft_id, cheapest
 
 
 @cli.command()
-@click.argument('symbol', nargs=1)
-@click.option('--grouping', '-g', help='Can be set to a grouping parameter, or to parameter.value')
-@click.option('--value', '-v', help='Set property value, can be used when grouping is set to a property parameter')
-@click.option('--price-symbol', '-s', help='Limit to this price symbol')
+@click.argument("symbol", nargs=1)
+@click.option("--grouping", "-g", help="Can be set to a grouping parameter, or to parameter.value")
+@click.option(
+    "--value",
+    "-v",
+    help="Set property value, can be used when grouping is set to a property parameter",
+)
+@click.option("--price-symbol", "-s", help="Limit to this price symbol")
 def nftopen(symbol, grouping, value, price_symbol):
-    """Returns the open interest book for the given symbol
-    """
+    """Returns the open interest book for the given symbol"""
     stm = shared_blockchain_instance()
     if stm.rpc is not None:
         stm.rpc.rpcconnect()
@@ -1217,7 +1362,9 @@ def nftopen(symbol, grouping, value, price_symbol):
     elif grouping is not None and len(grouping.split(".")) >= 2:
         grouping_name = grouping.split(".")[0]
         grouping_value = grouping.split(".")[1]
-    open_interest = market.get_open_interest(symbol, "sell", grouping_name, grouping_value, price_symbol)
+    open_interest = market.get_open_interest(
+        symbol, "sell", grouping_name, grouping_value, price_symbol
+    )
 
     t = PrettyTable(["priceSymbol", "grouping", "count"])
     t.align = "l"
@@ -1225,12 +1372,12 @@ def nftopen(symbol, grouping, value, price_symbol):
         t.add_row([order["priceSymbol"], order["grouping"], order["count"]])
     print(t.get_string())
 
+
 @cli.command()
-@click.argument('symbol', nargs=1, required=False)
-@click.option('--account', '-a', help='Buy with this account (defaults to "default_account")')
+@click.argument("symbol", nargs=1, required=False)
+@click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
 def nfttrades(symbol, account):
-    """Returns the trades history
-    """
+    """Returns the trades history"""
     stm = shared_blockchain_instance()
     if stm.rpc is not None:
         stm.rpc.rpcconnect()
@@ -1239,7 +1386,6 @@ def nfttrades(symbol, account):
         return
     market = NftMarket(blockchain_instance=stm)
     if symbol is not None:
-        
         nft = Nft(symbol)
         trades_history = market.get_trades_history(symbol, account)
         new_trades_history = []
@@ -1249,12 +1395,14 @@ def nfttrades(symbol, account):
                 if order["priceSymbol"] not in market_info:
                     token = Token(order["priceSymbol"])
                     market_info[order["priceSymbol"]] = token.get_market_info()
-                hive_price = float(market_info[order["priceSymbol"]]["lastPrice"]) * float(order["price"])
+                hive_price = float(market_info[order["priceSymbol"]]["lastPrice"]) * float(
+                    order["price"]
+                )
                 order["hive_price"] = hive_price
             else:
                 order["hive_price"] = float(order["price"])
             new_trades_history.append(order)
-            
+
         t = PrettyTable(["date", "account", "from", "Nfts", "price", "priceSymbol", "est. HIVE"])
         t.align = "l"
         t._max_width = {"from": 16, "Nfts": 20}
@@ -1270,7 +1418,17 @@ def nfttrades(symbol, account):
                     nfts.append(n)
                     row_sum[3] += 1
             row_sum[6] += hive_price
-            t.add_row([date, order["account"], ','.join(seller), ','.join(nfts), order["price"], order["priceSymbol"], hive_price])
+            t.add_row(
+                [
+                    date,
+                    order["account"],
+                    ",".join(seller),
+                    ",".join(nfts),
+                    order["price"],
+                    order["priceSymbol"],
+                    hive_price,
+                ]
+            )
         print(t.get_string())
         print("%d Nfts were sold for %.3f HIVE in the last 24 h" % (row_sum[3], row_sum[6]))
     else:
@@ -1278,7 +1436,7 @@ def nfttrades(symbol, account):
         symbol = nfts.get_symbol_list()
         market_info = {}
         t = PrettyTable(["Symbol", "Sold NFTs", "est. HIVE sum"])
-        t.align = "l"        
+        t.align = "l"
         for s in symbol:
             nft = Nft(s)
             trades_history = market.get_trades_history(s, account)
@@ -1290,7 +1448,9 @@ def nfttrades(symbol, account):
                     if order["priceSymbol"] not in market_info:
                         token = Token(order["priceSymbol"])
                         market_info[order["priceSymbol"]] = token.get_market_info()
-                    hive_price = float(market_info[order["priceSymbol"]]["lastPrice"]) * float(order["price"])
+                    hive_price = float(market_info[order["priceSymbol"]]["lastPrice"]) * float(
+                        order["price"]
+                    )
                     order["hive_price"] = hive_price
                 else:
                     order["hive_price"] = float(order["price"])
@@ -1306,15 +1466,18 @@ def nfttrades(symbol, account):
 
 
 @cli.command()
-@click.argument('symbol', nargs=1)
-@click.argument('nft_ids', nargs=-1)
-@click.option('--account', '-a', help='Buy with this account (defaults to "default_account")')
-@click.option('--market_account', '-m', help='Market account which will receive the fee (defaults to "nftmarket")', default="nftmarket")
-@click.option('--yes', '-y', help='Answer yes to all questions', is_flag=True, default=False)
+@click.argument("symbol", nargs=1)
+@click.argument("nft_ids", nargs=-1)
+@click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
+@click.option(
+    "--market_account",
+    "-m",
+    help='Market account which will receive the fee (defaults to "nftmarket")',
+    default="nftmarket",
+)
+@click.option("--yes", "-y", help="Answer yes to all questions", is_flag=True, default=False)
 def nftbuy(symbol, nft_ids, account, market_account, yes):
-    """Buy nfts from the market
-    
-    """
+    """Buy nfts from the market"""
     stm = shared_blockchain_instance()
     if stm.rpc is not None:
         stm.rpc.rpcconnect()
@@ -1344,16 +1507,19 @@ def nftbuy(symbol, nft_ids, account, market_account, yes):
 
 
 @cli.command()
-@click.argument('symbol', nargs=1)
-@click.argument('nft_ids', nargs=-1)
-@click.argument('price', nargs=1)
-@click.argument('price_symbol', nargs=1)
-@click.option('--account', '-a', help='Buy with this account (uses the beem default account when not set)')
-@click.option('--fee', '-f', help='Market fee 500 -> 5% (defaults is 500)', default=500)
-@click.option('--yes', '-y', help='Answer yes to all questions', is_flag=True, default=False)
+@click.argument("symbol", nargs=1)
+@click.argument("nft_ids", nargs=-1)
+@click.argument("price", nargs=1)
+@click.argument("price_symbol", nargs=1)
+@click.option(
+    "--account",
+    "-a",
+    help="Buy with this account (uses the nectar default account when not set)",
+)
+@click.option("--fee", "-f", help="Market fee 500 -> 5% (defaults is 500)", default=500)
+@click.option("--yes", "-y", help="Answer yes to all questions", is_flag=True, default=False)
 def nftsell(symbol, nft_ids, price, price_symbol, account, fee, yes):
-    """Create a sell order on the market
-    """
+    """Create a sell order on the market"""
     stm = shared_blockchain_instance()
     if stm.rpc is not None:
         stm.rpc.rpcconnect()
@@ -1371,7 +1537,10 @@ def nftsell(symbol, nft_ids, price, price_symbol, account, fee, yes):
     for _id in nft_ids:
         obj = nft.get_id(int(_id))
         t.add_row([obj["_id"], obj["account"], obj["properties"]])
-    print("Create a sell order for %.3f %s with a %.2f %% fee on:" % (float(price), price_symbol, fee/100))
+    print(
+        "Create a sell order for %.3f %s with a %.2f %% fee on:"
+        % (float(price), price_symbol, fee / 100)
+    )
     print(t)
     if not yes:
         ret = input("continue [y/n]?")
@@ -1379,19 +1548,17 @@ def nftsell(symbol, nft_ids, price, price_symbol, account, fee, yes):
             return
     tx = market.sell(symbol, account, list(nft_ids), price, price_symbol, fee)
     tx = json.dumps(tx, indent=4)
-    print(tx)    
+    print(tx)
 
 
 @cli.command()
-@click.argument('symbol', nargs=1)
-@click.argument('nft_ids', nargs=-1)
-@click.argument('newprice', nargs=1)
-@click.option('--account', '-a', help='Buy with this account (defaults to "default_account")')
-@click.option('--yes', '-y', help='Answer yes to all questions', is_flag=True, default=False)
+@click.argument("symbol", nargs=1)
+@click.argument("nft_ids", nargs=-1)
+@click.argument("newprice", nargs=1)
+@click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
+@click.option("--yes", "-y", help="Answer yes to all questions", is_flag=True, default=False)
 def nftchangeprice(symbol, nft_ids, newprice, account, yes):
-    """Cancel a nft sell order
-    
-    """
+    """Cancel a nft sell order"""
     stm = shared_blockchain_instance()
     if stm.rpc is not None:
         stm.rpc.rpcconnect()
@@ -1417,18 +1584,16 @@ def nftchangeprice(symbol, nft_ids, newprice, account, yes):
             return
     tx = market.change_price(symbol, account, list(nft_ids), newprice)
     tx = json.dumps(tx, indent=4)
-    print(tx)    
+    print(tx)
 
 
 @cli.command()
-@click.argument('symbol', nargs=1)
-@click.argument('nft_ids', nargs=-1)
-@click.option('--account', '-a', help='Buy with this account (defaults to "default_account")')
-@click.option('--yes', '-y', help='Answer yes to all questions', is_flag=True, default=False)
+@click.argument("symbol", nargs=1)
+@click.argument("nft_ids", nargs=-1)
+@click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
+@click.option("--yes", "-y", help="Answer yes to all questions", is_flag=True, default=False)
 def nftcancel(symbol, nft_ids, account, yes):
-    """Cancel a nft sell order
-    
-    """
+    """Cancel a nft sell order"""
     stm = shared_blockchain_instance()
     if stm.rpc is not None:
         stm.rpc.rpcconnect()
@@ -1458,8 +1623,8 @@ def nftcancel(symbol, nft_ids, account, yes):
 
 
 if __name__ == "__main__":
-    if getattr(sys, 'frozen', False):
-        os.environ['SSL_CERT_FILE'] = os.path.join(sys._MEIPASS, 'lib', 'cert.pem')
+    if getattr(sys, "frozen", False):
+        os.environ["SSL_CERT_FILE"] = os.path.join(sys._MEIPASS, "lib", "cert.pem")
         cli(sys.argv[1:])
     else:
         cli()

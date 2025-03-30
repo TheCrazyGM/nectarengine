@@ -1,19 +1,17 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-from hiveengine.api import Api
-from hiveengine.nft import Nft
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+from nectarengine.api import Api
+from nectarengine.nft import Nft
 
 
 class Nfts(list):
-    """ Access the Hive-engine Nfts
-    """
+    """Access the Hive-engine Nfts"""
+
     def __init__(self, api=None, **kwargs):
         if api is None:
             self.api = Api()
         else:
-            self.api = api        
+            self.api = api
         self.refresh()
 
     def refresh(self):
@@ -39,10 +37,9 @@ class Nfts(list):
 
     def get_nft(self, nft):
         """Returns Token from given nft symbol. Is None
-            when nft does not exists.
+        when nft does not exists.
         """
         for t in self:
             if t["symbol"].lower() == nft.lower():
                 return Nft(t, api=self.api)
         return None
-

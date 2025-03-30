@@ -1,7 +1,7 @@
-hiveengine\.nftmarket
+nectarengine\.nftmarket
 =====================
 
-.. automodule:: hiveengine.nftmarket
+.. automodule:: nectarengine.nftmarket
     :members:
     :undoc-members:
     :show-inheritance:

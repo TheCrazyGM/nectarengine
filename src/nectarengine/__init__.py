@@ -1,4 +1,5 @@
-""" hiveengine."""
+"""nectarengine."""
+
 from .version import version as __version__
 
 __all__ = [
@@ -13,5 +14,5 @@ __all__ = [
     "rpc",
     "tokenobject",
     "tokens",
-    "wallet"
+    "wallet",
 ]

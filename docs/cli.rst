@@ -1,9 +1,9 @@
-hiveengine CLI
+nectarengine CLI
 ==============
 
 Commands
 --------
 
-.. click:: hiveengine.cli:cli
-    :prog: hiveengine
+.. click:: nectarengine.cli:cli
+    :prog: nectarengine
     :show-nested:

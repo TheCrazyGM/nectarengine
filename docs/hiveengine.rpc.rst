@@ -1,7 +1,7 @@
-hiveengine\.rpc
+nectarengine\.rpc
 ===============
 
-.. automodule:: hiveengine.rpc
+.. automodule:: nectarengine.rpc
     :members:
     :undoc-members:
     :show-inheritance:

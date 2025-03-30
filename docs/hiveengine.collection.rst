@@ -1,7 +1,7 @@
-hiveengine\.collection
+nectarengine\.collection
 ======================
 
-.. automodule:: hiveengine.collection
+.. automodule:: nectarengine.collection
     :members:
     :undoc-members:
     :show-inheritance:

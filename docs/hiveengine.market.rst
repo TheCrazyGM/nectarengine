@@ -1,7 +1,7 @@
-hiveengine\.market
+nectarengine\.market
 ==================
 
-.. automodule:: hiveengine.market
+.. automodule:: nectarengine.market
     :members:
     :undoc-members:
     :show-inheritance:

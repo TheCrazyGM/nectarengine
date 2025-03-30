@@ -1,35 +1,33 @@
 """graphennewsrpc."""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import next
-from builtins import str
-from builtins import object
-import sys
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import json
 import logging
 import re
+import sys
+from builtins import object, str
 
-from .version import version as hiveengine_version
+from .version import version as nectarengine_version
+
 if sys.version_info[0] < 3:
-    from thread import interrupt_main
+    pass
 else:
-    from _thread import interrupt_main
+    pass
 
 REQUEST_MODULE = None
 if not REQUEST_MODULE:
     try:
         import requests
         from requests.adapters import HTTPAdapter
-        from requests.packages.urllib3.util.retry import Retry
         from requests.exceptions import ConnectionError
+        from requests.packages.urllib3.util.retry import Retry
+
         REQUEST_MODULE = "requests"
     except ImportError:
         REQUEST_MODULE = None
 
 log = logging.getLogger(__name__)
-
 
 
 class RPCError(Exception):
@@ -52,6 +50,7 @@ class UnauthorizedError(Exception):
 
 class SessionInstance(object):
     """Singelton for the Session Instance"""
+
     instance = None
 
 
@@ -70,7 +69,7 @@ def shared_session_instance():
 
 
 def get_endpoint_name(*args, **kwargs):
-        # Sepcify the endpoint to talk to
+    # Sepcify the endpoint to talk to
     endpoint = "contracts"
     if ("endpoint" in kwargs) and len(kwargs["endpoint"]) > 0:
         endpoint = kwargs["endpoint"]
@@ -87,7 +86,7 @@ class RPC(object):
 
         .. code-block:: python
 
-            from hiveengine.rpc import RPC
+            from nectarengine.rpc import RPC
             rpc = RPC()
             print(rpc.getLatestBlockInfo(endpoint="blockchain"))
 
@@ -96,19 +95,21 @@ class RPC(object):
     def __init__(self, url=None, user=None, password=None, **kwargs):
         """Init."""
         self._request_id = 0
-        self.timeout = kwargs.get('timeout', 60)
+        self.timeout = kwargs.get("timeout", 60)
         num_retries = kwargs.get("num_retries", -1)
         num_retries_call = kwargs.get("num_retries_call", 5)
 
         self.user = user
         self.password = password
         if url is None:
-            self.url = 'https://api.hive-engine.com/rpc/'
+            self.url = "https://engine.thecrazygm.com/"
         else:
             self.url = url
         self.session = shared_session_instance()
-        self.headers = {'User-Agent': 'hiveengine v%s' % (hiveengine_version),
-                        'content-type': 'application/json'}        
+        self.headers = {
+            "User-Agent": "nectarengine v%s" % (nectarengine_version),
+            "content-type": "application/json",
+        }
         self.rpc_queue = []
 
     def get_request_id(self):
@@ -118,22 +119,26 @@ class RPC(object):
 
     def request_send(self, endpoint, payload):
         if self.user is not None and self.password is not None:
-            response = self.session.post(self.url + endpoint,
-                                         data=payload,
-                                         headers=self.headers,
-                                         timeout=self.timeout,
-                                         auth=(self.user, self.password))
+            response = self.session.post(
+                self.url + endpoint,
+                data=payload,
+                headers=self.headers,
+                timeout=self.timeout,
+                auth=(self.user, self.password),
+            )
         else:
-            response = self.session.post(self.url + endpoint,
-                                         data=payload,
-                                         headers=self.headers,
-                                         timeout=self.timeout)
+            response = self.session.post(
+                self.url + endpoint,
+                data=payload,
+                headers=self.headers,
+                timeout=self.timeout,
+            )
         if response.status_code == 401:
             raise UnauthorizedError
         return response.text
 
     def version_string_to_int(self, network_version):
-        version_list = network_version.split('.')
+        version_list = network_version.split(".")
         return int(int(version_list[0]) * 1e8 + int(version_list[1]) * 1e4 + int(version_list[2]))
 
     def _check_for_server_error(self, reply):
@@ -146,9 +151,17 @@ class RPC(object):
             raise RPCErrorDoRetry("Bad Gateway")
         elif re.search("Too Many Requests", reply) or re.search("429", reply):
             raise RPCErrorDoRetry("Too Many Requests")
-        elif re.search("Service Temporarily Unavailable", reply) or re.search("Service Unavailable", reply) or re.search("503", reply):
+        elif (
+            re.search("Service Temporarily Unavailable", reply)
+            or re.search("Service Unavailable", reply)
+            or re.search("503", reply)
+        ):
             raise RPCErrorDoRetry("Service Temporarily Unavailable")
-        elif re.search("Gateway Time-out", reply) or re.search("Gateway Timeout", reply) or re.search("504", reply):
+        elif (
+            re.search("Gateway Time-out", reply)
+            or re.search("Gateway Timeout", reply)
+            or re.search("504", reply)
+        ):
             raise RPCErrorDoRetry("Gateway Time-out")
         elif re.search("HTTP Version not supported", reply) or re.search("505", reply):
             raise RPCError("HTTP Version not supported")
@@ -177,7 +190,7 @@ class RPC(object):
         """
         log.debug(json.dumps(payload))
 
-        reply = self.request_send(endpoint, json.dumps(payload, ensure_ascii=False).encode('utf8'))
+        reply = self.request_send(endpoint, json.dumps(payload, ensure_ascii=False).encode("utf8"))
 
         ret = {}
         try:
@@ -187,20 +200,20 @@ class RPC(object):
 
         log.debug(json.dumps(reply))
 
-        if isinstance(ret, dict) and 'error' in ret:
-            if 'detail' in ret['error']:
-                raise RPCError(ret['error']['detail'])
+        if isinstance(ret, dict) and "error" in ret:
+            if "detail" in ret["error"]:
+                raise RPCError(ret["error"]["detail"])
             else:
-                raise RPCError(ret['error']['message'])
+                raise RPCError(ret["error"]["message"])
         else:
             if isinstance(ret, list):
                 ret_list = []
                 for r in ret:
-                    if isinstance(r, dict) and 'error' in r:
-                        if 'detail' in r['error']:
-                            raise RPCError(r['error']['detail'])
+                    if isinstance(r, dict) and "error" in r:
+                        if "detail" in r["error"]:
+                            raise RPCError(r["error"]["detail"])
                         else:
-                            raise RPCError(r['error']['message'])
+                            raise RPCError(r["error"]["message"])
                     elif isinstance(r, dict) and "result" in r:
                         ret_list.append(r["result"])
                     else:
@@ -210,7 +223,9 @@ class RPC(object):
                 self.nodes.reset_error_cnt_call()
                 return ret["result"]
             elif isinstance(ret, int):
-                raise RPCError("Client returned invalid format. Expected JSON! Output: %s" % (str(ret)))
+                raise RPCError(
+                    "Client returned invalid format. Expected JSON! Output: %s" % (str(ret))
+                )
             else:
                 return ret
         return ret
@@ -219,19 +234,23 @@ class RPC(object):
     ####################################################################
     def __getattr__(self, name):
         """Map all methods to RPC calls and pass through the arguments."""
+
         def method(*args, **kwargs):
             endpoint = get_endpoint_name(*args, **kwargs)
             args = json.loads(json.dumps(args))
             # let's be able to define the num_retries per query
             if len(args) > 0:
                 args = args[0]
-            query = {"method": name,
-                     "jsonrpc": "2.0",
-                     "params": args,
-                     "id": self.get_request_id()}
+            query = {
+                "method": name,
+                "jsonrpc": "2.0",
+                "params": args,
+                "id": self.get_request_id(),
+            }
             self.rpc_queue.append(query)
             query = self.rpc_queue
             self.rpc_queue = []
             r = self.rpcexec(endpoint, query)
             return r
+
         return method

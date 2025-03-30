@@ -1,7 +1,7 @@
-hiveengine\.wallet
+nectarengine\.wallet
 ==================
 
-.. automodule:: hiveengine.wallet
+.. automodule:: nectarengine.wallet
     :members:
     :undoc-members:
     :show-inheritance:

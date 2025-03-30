@@ -3,28 +3,28 @@ Installation
 The minimal working python version is 3.5.x
 
 
-Install beem with pip:
+Install nectar with pip:
 
 .. code:: bash
 
-    pip install -U hiveengine
+    pip install -U nectarengine
 
 Sometimes this does not work. Please try::
 
-    pip3 install -U hiveengine
+    pip3 install -U nectarengine
 
 or::
 
-    python -m pip install hiveengine
+    python -m pip install nectarengine
 
 Manual installation
 -------------------
     
-You can install beem from this repository if you want the latest
+You can install nectar from this repository if you want the latest
 but possibly non-compiling version::
 
-    git clone https://github.com/holgern/hiveengine.git
-    cd hiveengine
+    git clone https://github.com/holgern/nectarengine.git
+    cd nectarengine
     python setup.py build
     
     python setup.py install --user

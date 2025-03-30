@@ -1,7 +1,7 @@
-hiveengine\.nft
+nectarengine\.nft
 ===============
 
-.. automodule:: hiveengine.nft
+.. automodule:: nectarengine.nft
     :members:
     :undoc-members:
     :show-inheritance:

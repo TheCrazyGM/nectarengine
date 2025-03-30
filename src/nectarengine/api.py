@@ -1,23 +1,16 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-import sys
-from datetime import datetime, timedelta, date
-import time
-import json
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import requests
-from timeit import default_timer as timer
-import logging
+
 from .rpc import RPC
 
 
 class Api(object):
-    """ Access the hive-engine API
-    """
+    """Access the hive-engine API"""
+
     def __init__(self, url=None, rpcurl=None, user=None, password=None, **kwargs):
         if url is None:
-            self.url = 'https://api.hive-engine.com/'
+            self.url = "https://enginerpc.com/"
         else:
             self.url = url
         if url is not None and rpcurl is None:
@@ -26,11 +19,17 @@ class Api(object):
             self.rpc = RPC(url=rpcurl)
 
     def get_history(self, account, symbol, limit=1000, offset=0):
-        """"Get the transaction history for an account and a token"""
-        response = requests.get("https://accounts.hive-engine.com/accountHistory?account=%s&limit=%d&offset=%d&symbol=%s" % (account, limit, offset, symbol))
+        """ "Get the transaction history for an account and a token"""
+        response = requests.get(
+            "https://accounts.hive-engine.com/accountHistory?account=%s&limit=%d&offset=%d&symbol=%s"
+            % (account, limit, offset, symbol)
+        )
         cnt2 = 0
         while response.status_code != 200 and cnt2 < 10:
-            response = requests.get("https://accounts.hive-engine.com/accountHistory?account=%s&limit=%d&offset=%d&symbol=%s" % (account, limit, offset, symbol))
+            response = requests.get(
+                "https://accounts.hive-engine.com/accountHistory?account=%s&limit=%d&offset=%d&symbol=%s"
+                % (account, limit, offset, symbol)
+            )
             cnt2 += 1
         return response.json()
 
@@ -67,28 +66,40 @@ class Api(object):
             return ret
 
     def get_contract(self, contract_name):
-        """ Get the contract specified from the database"""
+        """Get the contract specified from the database"""
         ret = self.rpc.getContract({"name": contract_name}, endpoint="contracts")
         if isinstance(ret, list) and len(ret) == 1:
             return ret[0]
         else:
             return ret
 
-    def find_one(self, contract_name, table_name, query = {}):
+    def find_one(self, contract_name, table_name, query={}):
         """Get the object that matches the query from the table of the specified contract"""
-        ret = self.rpc.findOne({"contract": contract_name, "table": table_name, "query": query}, endpoint="contracts")
+        ret = self.rpc.findOne(
+            {"contract": contract_name, "table": table_name, "query": query},
+            endpoint="contracts",
+        )
         return ret
 
-    def find(self, contract_name, table_name, query = {}, limit=1000, offset=0, indexes=[]):
+    def find(self, contract_name, table_name, query={}, limit=1000, offset=0, indexes=[]):
         """Get an array of objects that match the query from the table of the specified contract"""
-        ret = self.rpc.find({"contract": contract_name, "table": table_name, "query": query,
-                             "limit": limit, "offset": offset, "indexes": indexes}, endpoint="contracts")
+        ret = self.rpc.find(
+            {
+                "contract": contract_name,
+                "table": table_name,
+                "query": query,
+                "limit": limit,
+                "offset": offset,
+                "indexes": indexes,
+            },
+            endpoint="contracts",
+        )
         if isinstance(ret, list) and len(ret) == 1:
             return ret[0]
         else:
             return ret
 
-    def find_all(self, contract_name, table_name, query = {}):
+    def find_all(self, contract_name, table_name, query={}):
         """Get an array of objects that match the query from the table of the specified contract"""
         limit = 1000
         offset = 0
@@ -96,10 +107,9 @@ class Api(object):
         cnt = 0
         result = []
         while last_result is not None and len(last_result) == limit or cnt == 0:
-            cnt += 1            
+            cnt += 1
             last_result = self.find(contract_name, table_name, query, limit=limit, offset=offset)
             if last_result is not None:
                 result += last_result
                 offset += limit
         return result
-

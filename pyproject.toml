@@ -3,13 +3,14 @@ requires = ["hatchling", "wheel"]
 build-backend = "hatchling.build"
 
 [project]
-name = "hiveengine"
-version = "0.2.3"
+name = "nectarengine"
+version = "0.0.1"
 description = "command line tool and python library for sending hive engine tokens"
 readme = "README.md"
 requires-python = ">=3.12"
 license = {text = "MIT License"}
 authors = [
+    {name = "Michael Garcia", email = "thecrazygm@gmail.com"},
     {name = "Holger Nahrstaedt", email = "nahrstaedt@gmail.com"}
 ]
 maintainers = [
@@ -29,18 +30,63 @@ classifiers = [
     "Intended Audience :: Developers",
 ]
 dependencies = [
-    "beem",
+    "hive-nectar",
     "requests",
     "six",
+    "tomli>=2.2.1",
 ]
 
 [project.scripts]
-hiveengine = "hiveengine.cli:cli"
+nectarengine = "nectarengine.cli:cli"
 
 [project.urls]
-Homepage = "https://github.com/thecrazygm/hiveengine"
-Documentation = "https://hiveengine.readthedocs.io"
-"Bug Tracker" = "https://github.com/thecrazygm/hiveengine/issues"
+Homepage = "https://github.com/thecrazygm/nectarengine"
+Documentation = "https://nectarengine.readthedocs.io"
+"Bug Tracker" = "https://github.com/thecrazygm/nectarengine/issues"
 
 [tool.uv.sources]
-beem = { git = "https://github.com/thecrazygm/beem" }
+hive-nectar = { git = "https://github.com/thecrazygm/hive-nectar" }
+nectarengine = { git = "https://github.com/thecrazygm/nectarengine" }
+
+[tool.uv]
+default-groups = [ ]
+
+[tool.pytest]
+testpaths = ["tests"]
+python_files = "test_*.py"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+exclude = [
+    ".tox",
+    ".git",
+    "__pycache__",
+    "docs/source/conf.py",
+    "build",
+    "dist",
+    "tests/fixtures/*",
+    "*.pyc",
+    "*.egg-info",
+    ".cache",
+    ".eggs",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402"]
+"**/{tests,docs,tools}/*" = ["E402"]
+
+[tool.mypy]
+python_version = ">3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false

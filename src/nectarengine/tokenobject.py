@@ -1,17 +1,17 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-from hiveengine.api import Api
-from hiveengine.exceptions import TokenDoesNotExists
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import decimal
+
+from nectarengine.api import Api
+from nectarengine.exceptions import TokenDoesNotExists
 
 
 class Token(dict):
-    """ hive-engine token dict
+    """hive-engine token dict
 
-        :param str token: Name of the token
+    :param str token: Name of the token
     """
+
     def __init__(self, symbol, api=None):
         if api is None:
             self.api = Api()
@@ -46,10 +46,16 @@ class Token(dict):
 
     def get_holder(self, limit=1000, offset=0):
         """Returns all token holders"""
-        holder = self.api.find("tokens", "balances", query={"symbol": self.symbol}, limit=limit, offset=offset)
+        holder = self.api.find(
+            "tokens",
+            "balances",
+            query={"symbol": self.symbol},
+            limit=limit,
+            offset=offset,
+        )
         return holder
 
-    def get_all_holders(self):
+    def get_all_holder(self):
         """Returns all token holders by looping through all pages"""
         return self.api.find_all("tokens", "balances", query={"symbol": self.symbol})
 
@@ -63,7 +69,13 @@ class Token(dict):
 
     def get_buy_book(self, limit=100, offset=0):
         """Returns the buy book"""
-        holder = self.api.find("market", "buyBook", query={"symbol": self.symbol}, limit=limit, offset=offset)
+        holder = self.api.find(
+            "market",
+            "buyBook",
+            query={"symbol": self.symbol},
+            limit=limit,
+            offset=offset,
+        )
         return holder
 
     def get_all_buy_book(self):
@@ -72,7 +84,13 @@ class Token(dict):
 
     def get_sell_book(self, limit=100, offset=0):
         """Returns the sell book"""
-        holder = self.api.find("market", "sellBook", query={"symbol": self.symbol}, limit=limit, offset=offset)
+        holder = self.api.find(
+            "market",
+            "sellBook",
+            query={"symbol": self.symbol},
+            limit=limit,
+            offset=offset,
+        )
         return holder
 
     def get_all_sell_book(self):
