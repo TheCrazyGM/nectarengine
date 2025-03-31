@@ -1,5 +1,5 @@
 nectarengine CLI
-==============
+================
 
 Commands
 --------

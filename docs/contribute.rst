@@ -1,5 +1,5 @@
 Contributing to nectarengine
-==========================
+============================
 
 We welcome your contributions to our project.
 

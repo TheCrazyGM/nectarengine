@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.4
+
+- Added liquidity pool support
+
 ## 0.0.3
 
 - Update api test to make ues of only current blocks because of litenodes block limits.

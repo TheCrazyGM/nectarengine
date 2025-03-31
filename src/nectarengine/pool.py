@@ -78,7 +78,7 @@ class LiquidityPool(list):
 
         .. code-block:: python
 
-            from nectarengine.liquidity_pool import LiquidityPool
+            from nectarengine.pool import LiquidityPool
             from nectar import Hive
             active_wif = "5xxxx"
             hv = Hive(keys=[active_wif])
@@ -119,7 +119,7 @@ class LiquidityPool(list):
 
         .. code-block:: python
 
-            from nectarengine.liquidity_pool import LiquidityPool
+            from nectarengine.pool import LiquidityPool
             from nectar import Hive
             active_wif = "5xxxx"
             hv = Hive(keys=[active_wif])
@@ -184,7 +184,7 @@ class LiquidityPool(list):
 
         .. code-block:: python
 
-            from nectarengine.liquidity_pool import LiquidityPool
+            from nectarengine.pool import LiquidityPool
             from nectar import Hive
             active_wif = "5xxxx"
             hv = Hive(keys=[active_wif])
@@ -247,7 +247,7 @@ class LiquidityPool(list):
 
         .. code-block:: python
 
-            from nectarengine.liquidity_pool import LiquidityPool
+            from nectarengine.pool import LiquidityPool
             from nectar import Hive
             active_wif = "5xxxx"
             hv = Hive(keys=[active_wif])
@@ -293,7 +293,7 @@ class LiquidityPool(list):
 
         .. code-block:: python
 
-            from nectarengine.liquidity_pool import LiquidityPool
+            from nectarengine.pool import LiquidityPool
             from nectar import Hive
             active_wif = "5xxxx"
             hv = Hive(keys=[active_wif])
@@ -334,7 +334,7 @@ class LiquidityPool(list):
 
         .. code-block:: python
 
-            from nectarengine.liquidity_pool import LiquidityPool
+            from nectarengine.pool import LiquidityPool
             from nectar import Hive
             active_wif = "5xxxx"
             hv = Hive(keys=[active_wif])

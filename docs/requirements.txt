@@ -1,4 +1,4 @@
-autobahn>=0.14
+autobahn
 future
 ecdsa
 requests

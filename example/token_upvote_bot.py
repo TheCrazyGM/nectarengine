@@ -29,17 +29,17 @@ if __name__ == "__main__":
 
     wallet = Wallet(upvote_account, blockchain_instance=hv)
 
-    last_steem_block = (
+    last_hive_block = (
         1950  # It is a good idea to store this block, otherwise all transfers will be checked again
     )
     while True:
         history = wallet.get_history(upvote_token)
         for h in history:
-            if int(h["block"]) <= last_steem_block:
+            if int(h["block"]) <= last_hive_block:
                 continue
             if h["to"] != upvote_account:
                 continue
-            last_steem_block = int(h["block"])
+            last_hive_block = int(h["block"])
             if len(whitelist) > 0 and h["from"] not in whitelist:
                 print("%s is not in the whitelist, skipping" % h["from"])
                 continue
