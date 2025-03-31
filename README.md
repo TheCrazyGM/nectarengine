@@ -73,10 +73,10 @@ print(api.get_history("thecrazygm", "INCOME"))
 ## Token transfer
 
 ```python
-from nectar import Steem
+from nectar import Hive
 from nectarengine.wallet import Wallet
-stm = Steem(keys=["5xx"])
-wallet = Wallet("test_user", steem_instance=stm)
+hv = Hive(keys=["5xx"])
+wallet = Wallet("test_user", blockchain_instance=hv)
 wallet.transfer("test1",1,"TST", memo="This is a test")
 ```
 
@@ -85,30 +85,30 @@ wallet.transfer("test1",1,"TST", memo="This is a test")
 ### Create a buy order
 
 ```python
-from nectar import Steem
+from nectar import Hive
 from nectarengine.market import Market
-stm = Steem(keys=["5xx"])
-m=Market(steem_instance=stm)
+hv = Hive(keys=["5xx"])
+m=Market(blockchain_instance=hv)
 m.buy("test_user", 1, "TST", 9.99)
 ```
 
 ### Create a sell order
 
 ```python
-from nectar import Steem
+from nectar import Hive
 from nectarengine.market import Market
-stm = Steem(keys=["5xx"])
-m=Market(steem_instance=stm)
+hv = Hive(keys=["5xx"])
+m=Market(blockchain_instance=hv)
 m.sell("test_user", 1, "TST", 9.99)
 ```
 
 ### Cancel a buy order
 
 ```python
-from nectar import Steem
+from nectar import Hive
 from nectarengine.market import Market
-stm = Steem(keys=["5xx"])
-m=Market(steem_instance=stm)
+hv = Hive(keys=["5xx"])
+m=Market(blockchain_instance=hv)
 open_buy_orders = m.get_buy_book("TST", "test_user")
 m.cancel("test_user", "buy", open_buy_orders[0]["_id"])
 ```
@@ -116,30 +116,30 @@ m.cancel("test_user", "buy", open_buy_orders[0]["_id"])
 ### Cancel a sell order
 
 ```python
-from nectar import Steem
+from nectar import Hive
 from nectarengine.market import Market
-stm = Steem(keys=["5xx"])
-m=Market(steem_instance=stm)
+hv = Hive(keys=["5xx"])
+m=Market(blockchain_instance=hv)
 open_sell_orders = m.get_sell_book("TST", "test_user")
 m.cancel("test_user", "sell", open_sell_orders[0]["_id"])
 ```
 
-### Deposit Steem
+### Deposit Hive
 
 ```python
-from nectar import Steem
+from nectar import Hive
 from nectarengine.market import Market
-stm = Steem(keys=["5xx"])
-m=Market(steem_instance=stm)
+hv = Hive(keys=["5xx"])
+m=Market(blockchain_instance=hv)
 m.deposit("test_user", 10)
 ```
 
 ### Withdrawal
 
 ```python
-from nectar import Steem
+from nectar import Hive
 from nectarengine.market import Market
-stm = Steem(keys=["5xx"])
-m=Market(steem_instance=stm)
+hv = Hive(keys=["5xx"])
+m=Market(blockchain_instance=hv)
 m.withdraw("test_user", 10)
 ```
