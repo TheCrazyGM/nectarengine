@@ -92,4 +92,5 @@ dev = [
   "sphinx>=8.2.3",
   "sphinx-click>=6.0.0",
   "sphinx-rtd-theme>=3.0.2",
+  "twine>=6.1.0",
 ]
