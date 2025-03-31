@@ -12,6 +12,7 @@ __all__ = [
     "nft",
     "nfts",
     "pool",
+    "poolobject",
     "rpc",
     "tokenobject",
     "tokens",

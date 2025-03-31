@@ -87,4 +87,3 @@ def test_get_tokens(test_pool):
     assert isinstance(tokens, list)
     assert len(tokens) == 2
     assert all(isinstance(token, str) for token in tokens)
-
