@@ -1,8 +1,3 @@
-import os
-import sys
-
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../src"))
-
 from nectarengine.pool import LiquidityPool
 
 # Initialize the LiquidityPool instance
@@ -20,5 +15,10 @@ if income_pool:
     print("\nLiquidity Positions:")
     for position in positions:
         print(f"Account: {position['account']}, Shares: {position['shares']}")
+
+    # Get pool stats
+    price = income_pool.calculate_price()
+
+    print(f"\nPool Price: {price}")
 else:
     print("SWAP.HIVE:INCOME pool not found")
