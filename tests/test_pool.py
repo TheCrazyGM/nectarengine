@@ -1,19 +1,90 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
+import pytest
 
-import unittest
-
+from nectarengine.exceptions import PoolDoesNotExist
 from nectarengine.pool import LiquidityPool
+from nectarengine.poolobject import Pool
 
 
-class Testcases(unittest.TestCase):
-    def test_pool(self):
-        lp = LiquidityPool()
-        pool = lp.get_pool("SWAP.HIVE:INCOME")
-        self.assertTrue(pool is not None)
-        self.assertTrue(len(pool) > 0)
-        p1 = lp.get_liquidity_positions(token_pair="SWAP.HIVE:INCOME")
-        self.assertTrue(p1 is not None)
-        self.assertTrue(len(p1) > 0)
-        p2 = lp.get_liquidity_positions(account="thecrazygm")
-        self.assertTrue(p2 is not None)
-        self.assertTrue(len(p2) > 0)
+@pytest.fixture
+def liquidity_pool():
+    return LiquidityPool()
+
+
+@pytest.fixture
+def test_pool(liquidity_pool):
+    return liquidity_pool.get_pool("SWAP.HIVE:INCOME")
+
+
+def test_get_pool(liquidity_pool):
+    # Test getting an existing pool
+    pool = liquidity_pool.get_pool("SWAP.HIVE:INCOME")
+    assert isinstance(pool, Pool)
+    assert pool["tokenPair"] == "SWAP.HIVE:INCOME"
+
+    # Test getting a non-existent pool
+    with pytest.raises(PoolDoesNotExist):
+        liquidity_pool.get_pool("NON:EXISTENT")
+
+
+def test_pool_info(test_pool):
+    # Test basic pool information
+    info = test_pool.get_info()
+    assert isinstance(info, dict)
+    assert "tokenPair" in info
+    assert "baseQuantity" in info
+    assert "quoteQuantity" in info
+
+
+def test_liquidity_positions(test_pool):
+    # Test getting liquidity positions
+    positions = test_pool.get_liquidity_positions()
+    assert isinstance(positions, list)
+    if positions:  # If there are positions
+        assert "account" in positions[0]
+        assert "shares" in positions[0]
+
+
+def test_calculate_tokens_out(test_pool):
+    # Test token calculations
+    tokens = test_pool.get_tokens()
+    token_in = tokens[0]
+    token_out = tokens[1]
+
+    # Test valid calculation
+    amount_out = test_pool.calculate_tokens_out(token_in, "1.0")
+    assert isinstance(amount_out, str)
+
+    # Test invalid token
+    with pytest.raises(ValueError):
+        test_pool.calculate_tokens_out("INVALID", "1.0")
+
+    # Test insufficient liquidity
+    with pytest.raises(ValueError):
+        test_pool.calculate_tokens_out(token_in, "9999999999999999")
+
+
+def test_calculate_tokens_in(test_pool):
+    # Test token calculations
+    tokens = test_pool.get_tokens()
+    token_in = tokens[0]
+    token_out = tokens[1]
+
+    # Test valid calculation
+    amount_in = test_pool.calculate_tokens_in(token_out, "1.0")
+    assert isinstance(amount_in, str)
+
+    # Test invalid token
+    with pytest.raises(ValueError):
+        test_pool.calculate_tokens_in("INVALID", "1.0")
+
+    # Test insufficient liquidity
+    with pytest.raises(ValueError):
+        test_pool.calculate_tokens_in(token_out, "9999999999999999")
+
+
+def test_get_tokens(test_pool):
+    tokens = test_pool.get_tokens()
+    assert isinstance(tokens, list)
+    assert len(tokens) == 2
+    assert all(isinstance(token, str) for token in tokens)
+

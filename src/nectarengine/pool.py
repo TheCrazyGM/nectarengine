@@ -8,8 +8,10 @@ from nectarengine.api import Api
 from nectarengine.exceptions import (
     InsufficientTokenAmount,
     InvalidTokenAmount,
+    PoolDoesNotExist,
     TokenNotInWallet,
 )
+from nectarengine.poolobject import Pool
 from nectarengine.tokenobject import Token
 from nectarengine.tokens import Tokens
 from nectarengine.wallet import Wallet
@@ -48,9 +50,14 @@ class LiquidityPool(list):
         """Returns a specific liquidity pool for a given token pair
 
         :param str token_pair: Token pair in the format 'TOKEN1:TOKEN2'
+        :raises PoolDoesNotExist: If the pool does not exist
+        :return: Pool object
+        :rtype: Pool
         """
-        pool = self.api.find_one("marketpools", "pools", query={"tokenPair": token_pair.upper()})
-        return pool
+        try:
+            return Pool(token_pair, api=self.api)
+        except PoolDoesNotExist:
+            raise PoolDoesNotExist(token_pair)
 
     def get_liquidity_positions(self, account=None, token_pair=None, limit=100, offset=0):
         """Returns liquidity positions. When account is set,

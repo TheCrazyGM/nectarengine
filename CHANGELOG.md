@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.5
+
+- Added Pool Object to ease use of Liquidity Pools
+
 ## 0.0.4
 
 - Added liquidity pool support

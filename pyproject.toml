@@ -1,6 +1,6 @@
 [project]
 name = "nectarengine"
-version = "0.0.4"
+version = "0.0.5"
 description = "command line tool and python library for sending hive engine tokens"
 readme = "README.md"
 requires-python = ">=3.12"

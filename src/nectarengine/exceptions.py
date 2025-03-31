@@ -42,3 +42,9 @@ class MaxSupplyReached(Exception):
     """Only the token issuer is allowed to permit new tokens"""
 
     pass
+
+
+class PoolDoesNotExist(Exception):
+    """Liquidity pool does not (yet) exist"""
+
+    pass

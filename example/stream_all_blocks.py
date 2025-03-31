@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     scan_token = ["BTC"]
     print("Scanning all blocks from 0 to %d..." % latest_block["blockNumber"])
-    steemp_payments = []
+    hive_payments = []
 
     for block_num in range(14500, latest_block["blockNumber"]):
         block = api.get_block_info(block_num)
@@ -44,12 +44,12 @@ if __name__ == "__main__":
                         if transfer["data"]["symbol"] in scan_token:
                             token_found = True
                     if token_found:
-                        steem_block = Block(block["refBlockNumber"])
+                        hive_block = Block(block["refBlockNumber"])
                         print(
                             "%d (%s) - %s:"
                             % (
                                 block["blockNumber"],
-                                steem_block.json()["timestamp"],
+                                hive_block.json()["timestamp"],
                                 trx["transactionId"],
                             )
                         )
@@ -84,12 +84,12 @@ if __name__ == "__main__":
                         if transfer["data"]["symbol"] in scan_token:
                             token_found = True
                     if token_found:
-                        steem_block = Block(block["refBlockNumber"])
+                        hive_block = Block(block["refBlockNumber"])
                         print(
                             "%d (%s) - %s"
                             % (
                                 block["blockNumber"],
-                                steem_block.json()["timestamp"],
+                                hive_block.json()["timestamp"],
                                 trx["transactionId"],
                             )
                         )
