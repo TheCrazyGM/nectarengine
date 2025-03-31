@@ -1,5 +1,5 @@
 nectarengine\.market
-==================
+====================
 
 .. automodule:: nectarengine.market
     :members:

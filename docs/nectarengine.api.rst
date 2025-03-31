@@ -1,5 +1,5 @@
 nectarengine\.api
-===============
+=================
 
 .. automodule:: nectarengine.api
     :members:

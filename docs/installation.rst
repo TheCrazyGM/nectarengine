@@ -23,12 +23,12 @@ Manual installation
 You can install nectar from this repository if you want the latest
 but possibly non-compiling version::
 
-    git clone https://github.com/holgern/nectarengine.git
+    git clone https://github.com/thecrazygm/nectarengine.git
     cd nectarengine
-    python setup.py build
-    
-    python setup.py install --user
+    uv sync   
+
+    uv sync --dev
 
 Run tests after install::
 
-    pytest
+    make test

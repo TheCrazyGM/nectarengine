@@ -1,5 +1,5 @@
 nectarengine\.wallet
-==================
+====================
 
 .. automodule:: nectarengine.wallet
     :members:

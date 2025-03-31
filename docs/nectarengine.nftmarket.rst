@@ -1,5 +1,5 @@
 nectarengine\.nftmarket
-=====================
+=======================
 
 .. automodule:: nectarengine.nftmarket
     :members:

@@ -8,7 +8,7 @@ Repository
 
 The repository of nectar is currently located at:
 
-    https://github.com/holgern/nectarengine
+    https://github.com/thecrazygm/nectarengine
 
 Flow
 ----

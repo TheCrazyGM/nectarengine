@@ -1,5 +1,5 @@
 nectarengine\.nfts
-================
+==================
 
 .. automodule:: nectarengine.nfts
     :members:

@@ -1,17 +1,8 @@
-Modules
-=======
-
-nectarengine Modules
-------------------
+nectarengine
+============
 
 .. toctree::
+   :maxdepth: 6
+   :glob:
 
-   nectarengine.api
-   nectarengine.collection
-   nectarengine.exceptions
-   nectarengine.market
-   nectarengine.nft
-   nectarengine.rpc
-   nectarengine.tokenobject
-   nectarengine.tokens
-   nectarengine.wallet
+   nectarengine.*

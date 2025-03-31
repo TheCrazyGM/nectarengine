@@ -1,5 +1,5 @@
 nectarengine\.rpc
-===============
+=================
 
 .. automodule:: nectarengine.rpc
     :members:

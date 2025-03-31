@@ -1,6 +1,6 @@
 [project]
 name = "nectarengine"
-version = "0.0.2"
+version = "0.0.3"
 description = "command line tool and python library for sending hive engine tokens"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -24,7 +24,6 @@ classifiers = [
 dependencies = [
   "hive-nectar",
   "requests",
-  "six",
 ]
 
 [project.urls]
@@ -90,4 +89,7 @@ nectarengine = { git = "https://github.com/thecrazygm/nectarengine" }
 dev = [
   "tomli",
   "pytest",
+  "sphinx>=8.2.3",
+  "sphinx-click>=6.0.0",
+  "sphinx-rtd-theme>=3.0.2",
 ]

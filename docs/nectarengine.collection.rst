@@ -1,5 +1,5 @@
 nectarengine\.collection
-======================
+========================
 
 .. automodule:: nectarengine.collection
     :members:

@@ -9,12 +9,14 @@ class Testcases(unittest.TestCase):
     def test_api(self):
         api = Api()
         result = api.get_latest_block_info()
+        next_test = result["blockNumber"]
         self.assertTrue(len(result) > 0)
 
-        result = api.get_block_info(200000)
+        result = api.get_block_info(next_test - 64000)
+        next_test = result["transactions"][0]["transactionId"]
         self.assertTrue(len(result) > 0)
 
-        result = api.get_transaction_info("78aea60cdc4477cdf9437d8224e34c6033499169")
+        result = api.get_transaction_info(next_test)
         self.assertTrue(len(result) > 0)
 
         result = api.get_contract("tokens")

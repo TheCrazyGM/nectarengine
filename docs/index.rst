@@ -1,5 +1,5 @@
 Welcome to nectarengine's documentation!
-======================================
+========================================
 
 General
 -------
@@ -10,7 +10,6 @@ General
    quickstart
    cli
    tutorials
-   configuration
    modules
    contribute
    support
