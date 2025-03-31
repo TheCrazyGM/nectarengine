@@ -14,12 +14,12 @@ class NftMarket(list):
            instance
     """
 
-    def __init__(self, api=None, blockchain_instance=None, steem_instance=None):
+    def __init__(self, api=None, blockchain_instance=None):
         if api is None:
             self.api = Api()
         else:
             self.api = api
-        self.blockchain = blockchain_instance or steem_instance or shared_blockchain_instance()
+        self.blockchain = blockchain_instance or shared_blockchain_instance()
         self.nfts = Nfts(api=self.api)
         self.ssc_id = "ssc-mainnet-hive"
 

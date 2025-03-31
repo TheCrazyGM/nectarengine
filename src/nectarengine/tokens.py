@@ -5,7 +5,7 @@ from nectarengine.tokenobject import Token
 
 
 class Tokens(list):
-    """Access the steem-engine tokens"""
+    """Access the hive-engine tokens"""
 
     def __init__(self, api=None, **kwargs):
         if api is None:

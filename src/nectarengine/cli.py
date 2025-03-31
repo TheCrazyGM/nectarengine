@@ -42,18 +42,18 @@ except ImportError:
     KEYRING_AVAILABLE = False
 
 
-def unlock_wallet(stm, password=None, allow_wif=True):
-    if stm.unsigned and stm.nobroadcast:
+def unlock_wallet(hv, password=None, allow_wif=True):
+    if hv.unsigned and hv.nobroadcast:
         return True
-    if not stm.wallet.locked():
+    if not hv.wallet.locked():
         return True
-    password_storage = stm.config["password_storage"]
+    password_storage = hv.config["password_storage"]
     if not password and KEYRING_AVAILABLE and password_storage == "keyring":
         password = keyring.get_password("nectar", "wallet")
     if not password and password_storage == "environment" and "UNLOCK" in os.environ:
         password = os.environ.get("UNLOCK")
     if bool(password):
-        stm.wallet.unlock(password)
+        hv.wallet.unlock(password)
     else:
         if allow_wif:
             password = click.prompt(
@@ -66,10 +66,10 @@ def unlock_wallet(stm, password=None, allow_wif=True):
                 "Password to unlock wallet", confirmation_prompt=False, hide_input=True
             )
         try:
-            stm.wallet.unlock(password)
+            hv.wallet.unlock(password)
         except Exception:
             try:
-                stm.wallet.setKeys([password])
+                hv.wallet.setKeys([password])
                 print("Wif accepted!")
                 return True
             except Exception:
@@ -80,15 +80,15 @@ def unlock_wallet(stm, password=None, allow_wif=True):
                 else:
                     raise WrongMasterPasswordException("entered password is not a valid password")
 
-    if stm.wallet.locked():
+    if hv.wallet.locked():
         if password_storage == "keyring" or password_storage == "environment":
             print("Wallet could not be unlocked with %s!" % password_storage)
             password = click.prompt(
                 "Password to unlock wallet", confirmation_prompt=False, hide_input=True
             )
             if bool(password):
-                unlock_wallet(stm, password=password)
-                if not stm.wallet.locked():
+                unlock_wallet(hv, password=password)
+                if not hv.wallet.locked():
                     return True
         else:
             print("Wallet could not be unlocked!")
@@ -118,10 +118,10 @@ def cli(no_broadcast, verbose):
     ch.setFormatter(formatter)
     log.addHandler(ch)
     debug = verbose > 0
-    stm = Hive(
+    hv = Hive(
         nobroadcast=no_broadcast,
     )
-    set_shared_blockchain_instance(stm)
+    set_shared_blockchain_instance(hv)
     pass
 
 
@@ -133,7 +133,7 @@ def info(objects):
     General information about hive-engine, a block, an account, a token,
     and a transaction id
     """
-    stm = None
+    hv = None
     api = Api()
 
     if not objects:
@@ -246,11 +246,11 @@ def info(objects):
                 print(t)
         elif re.match(r"^[a-zA-Z0-9\-\._]{2,16}$", obj):
             print("Token Wallet: %s" % obj)
-            if stm is None:
+            if hv is None:
                 nodelist = NodeList()
                 nodelist.update_nodes()
-                stm = Hive(node=nodelist.get_hive_nodes())
-            wallet = Wallet(obj, blockchain_instance=stm)
+                hv = Hive(node=nodelist.get_hive_nodes())
+            wallet = Wallet(obj, blockchain_instance=hv)
             t = PrettyTable(
                 [
                     "id",
@@ -520,22 +520,22 @@ def richlist(symbol, top):
 @click.option("--account", "-a", help="Transfer from this account")
 def transfer(to, amount, token, memo, memos, account):
     """Transfer a token"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
     if not account:
-        account = stm.config["default_account"]
+        account = hv.config["default_account"]
     if not bool(memo):
         memo = ""
     if not bool(memos):
         memos = ""
-    if not unlock_wallet(stm):
+    if not unlock_wallet(hv):
         return
 
-    wallet = Wallet(account, blockchain_instance=stm)
+    wallet = Wallet(account, blockchain_instance=hv)
     if amount is None and token is None:
         token = amount
         amount = 0
@@ -604,17 +604,17 @@ def transfer(to, amount, token, memo, memos, account):
 @click.option("--account", "-a", help="Transfer from this account")
 def issue(to, amount, token, account):
     """Issue a token"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
     if not account:
-        account = stm.config["default_account"]
-    if not unlock_wallet(stm):
+        account = hv.config["default_account"]
+    if not unlock_wallet(hv):
         return
-    wallet = Wallet(account, blockchain_instance=stm)
+    wallet = Wallet(account, blockchain_instance=hv)
     tx = wallet.issue(to, amount, token)
     tx = json.dumps(tx, indent=4)
     print(tx)
@@ -627,19 +627,19 @@ def issue(to, amount, token, account):
 @click.option("--receiver", "-r", help="Stake to this account (default is sender account)")
 def stake(amount, token, account, receiver):
     """stake a token / all tokens"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
     if not account:
-        account = stm.config["default_account"]
+        account = hv.config["default_account"]
     if not receiver:
         receiver = account
-    if not unlock_wallet(stm):
+    if not unlock_wallet(hv):
         return
-    wallet = Wallet(account, blockchain_instance=stm)
+    wallet = Wallet(account, blockchain_instance=hv)
     if amount is None and token is None:
         token = amount
         amount = 0
@@ -710,17 +710,17 @@ def stake(amount, token, account, receiver):
 @click.option("--account", "-a", help="Transfer from this account")
 def unstake(amount, token, account):
     """unstake a token / all tokens"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
     if not account:
-        account = stm.config["default_account"]
-    if not unlock_wallet(stm):
+        account = hv.config["default_account"]
+    if not unlock_wallet(hv):
         return
-    wallet = Wallet(account, blockchain_instance=stm)
+    wallet = Wallet(account, blockchain_instance=hv)
     if amount is None and token is None:
         token = amount
         amount = 0
@@ -791,17 +791,17 @@ def unstake(amount, token, account):
 @click.option("--account", "-a", help="Transfer from this account")
 def cancel_unstake(account, trx_id):
     """unstake a token"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
     if not account:
-        account = stm.config["default_account"]
-    if not unlock_wallet(stm):
+        account = hv.config["default_account"]
+    if not unlock_wallet(hv):
         return
-    wallet = Wallet(account, blockchain_instance=stm)
+    wallet = Wallet(account, blockchain_instance=hv)
     tx = wallet.cancel_unstake(trx_id)
     tx = json.dumps(tx, indent=4)
     print(tx)
@@ -812,17 +812,17 @@ def cancel_unstake(account, trx_id):
 @click.option("--account", "-a", help="withdraw from this account")
 def withdraw(amount, account):
     """Widthdraw SWAP.HIVE to account as HIVE."""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
     if not account:
-        account = stm.config["default_account"]
-    if not unlock_wallet(stm):
+        account = hv.config["default_account"]
+    if not unlock_wallet(hv):
         return
-    market = Market(blockchain_instance=stm)
+    market = Market(blockchain_instance=hv)
     tx = market.withdraw(account, amount)
     tx = json.dumps(tx, indent=4)
     print(tx)
@@ -833,17 +833,17 @@ def withdraw(amount, account):
 @click.option("--account", "-a", help="withdraw from this account")
 def deposit(amount, account):
     """Deposit HIVE to market in exchange for SWAP.HIVE."""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
     if not account:
-        account = stm.config["default_account"]
-    if not unlock_wallet(stm):
+        account = hv.config["default_account"]
+    if not unlock_wallet(hv):
         return
-    market = Market(blockchain_instance=stm)
+    market = Market(blockchain_instance=hv)
     tx = market.deposit(account, amount)
     tx = json.dumps(tx, indent=4)
     print(tx)
@@ -856,16 +856,16 @@ def deposit(amount, account):
 @click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
 def buy(amount, token, price, account):
     """Put a buy-order for a token to the hive-engine market"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
     if account is None:
-        account = stm.config["default_account"]
-    market = Market(blockchain_instance=stm)
-    if not unlock_wallet(stm):
+        account = hv.config["default_account"]
+    market = Market(blockchain_instance=hv)
+    if not unlock_wallet(hv):
         return
     tx = market.buy(account, amount, token, price)
     tx = json.dumps(tx, indent=4)
@@ -879,23 +879,23 @@ def buy(amount, token, price, account):
 @click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
 def sell(amount, token, price, account):
     """Put a sell-order for a token to the hive-engine market"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
     if account is None:
-        account = stm.config["default_account"]
+        account = hv.config["default_account"]
 
     if amount is None and price is None and token is None:
-        if not unlock_wallet(stm):
+        if not unlock_wallet(hv):
             return
         token = amount
         amount = 0
         tokens = Tokens()
-        wallet = Wallet(account, blockchain_instance=stm)
-        market = Market(blockchain_instance=stm)
+        wallet = Wallet(account, blockchain_instance=hv)
+        market = Market(blockchain_instance=hv)
         for t in wallet:
             token = t["symbol"]
             amount = float(t["balance"])
@@ -929,7 +929,7 @@ def sell(amount, token, price, account):
     elif price is None and token is None:
         token = amount
         amount = 0
-        wallet = Wallet(account, blockchain_instance=stm)
+        wallet = Wallet(account, blockchain_instance=hv)
         for t in wallet:
             if t["symbol"] == token:
                 amount = float(t["balance"])
@@ -954,8 +954,8 @@ def sell(amount, token, price, account):
         if ret not in ["y", "yes"]:
             return
 
-    market = Market(blockchain_instance=stm)
-    if not unlock_wallet(stm):
+    market = Market(blockchain_instance=hv)
+    if not unlock_wallet(hv):
         return
     tx = market.sell(account, amount, token, price)
     tx = json.dumps(tx, indent=4)
@@ -966,18 +966,18 @@ def sell(amount, token, price, account):
 @click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
 def balance(account):
     """Show token balance and value"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
     if account is None:
-        account = stm.config["default_account"]
+        account = hv.config["default_account"]
     token = ""
     amount = 0
     tokens = Tokens()
-    wallet = Wallet(account, blockchain_instance=stm)
+    wallet = Wallet(account, blockchain_instance=hv)
     table = PrettyTable(["symbol", "balance", "stake", "liquid HIVE", "staked HIVE"])
     table.align = "l"
     sum_amount = 0
@@ -1019,19 +1019,19 @@ def cancel(order_type, order_id, account, yes):
 
     order_type is either sell or buy
     """
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
     if account is None:
-        account = stm.config["default_account"]
-    market = Market(blockchain_instance=stm)
-    if not unlock_wallet(stm):
+        account = hv.config["default_account"]
+    market = Market(blockchain_instance=hv)
+    if not unlock_wallet(hv):
         return
     if order_id is None and order_type == "buy":
-        wallet = Wallet(account, blockchain_instance=stm)
+        wallet = Wallet(account, blockchain_instance=hv)
         for t in wallet:
             token = t["symbol"]
             buy_book = market.get_buy_book(token, account)
@@ -1059,7 +1059,7 @@ def cancel(order_type, order_id, account, yes):
                     time.sleep(4)
         return
     elif order_id is None and order_type == "sell":
-        wallet = Wallet(account, blockchain_instance=stm)
+        wallet = Wallet(account, blockchain_instance=hv)
         for t in wallet:
             token = t["symbol"]
             sell_book = market.get_sell_book(token, account)
@@ -1096,17 +1096,17 @@ def cancel(order_type, order_id, account, yes):
 @click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
 def buybook(token, account):
     """Returns the buy book for the given token"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
-    market = Market(blockchain_instance=stm)
+    market = Market(blockchain_instance=hv)
     if token is None:
         if account is None:
-            account = stm.config["default_account"]
-        wallet = Wallet(account, blockchain_instance=stm)
+            account = hv.config["default_account"]
+        wallet = Wallet(account, blockchain_instance=hv)
         table = PrettyTable(["token", "order_id", "account", "quantity", "price"])
         table.align = "l"
         for t in wallet:
@@ -1143,17 +1143,17 @@ def buybook(token, account):
 @click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
 def sellbook(token, account):
     """Returns the sell book for the given token"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
-    market = Market(blockchain_instance=stm)
+    market = Market(blockchain_instance=hv)
     if token is None:
         if account is None:
-            account = stm.config["default_account"]
-        wallet = Wallet(account, blockchain_instance=stm)
+            account = hv.config["default_account"]
+        wallet = Wallet(account, blockchain_instance=hv)
         table = PrettyTable(["token", "order_id", "account", "quantity", "price"])
         table.align = "l"
         for t in wallet:
@@ -1225,13 +1225,13 @@ def nftsellbook(
     interactive,
 ):
     """Returns the sell book for the given symbol"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
-    market = NftMarket(blockchain_instance=stm)
+    market = NftMarket(blockchain_instance=hv)
     nft = Nft(symbol)
     grouping_name = None
     grouping_value = None
@@ -1317,8 +1317,8 @@ def nftsellbook(
         if ret in ["a", "abort"]:
             return
         account = input("Enter account name: ")
-        market = NftMarket(blockchain_instance=stm)
-        if not unlock_wallet(stm):
+        market = NftMarket(blockchain_instance=hv)
+        if not unlock_wallet(hv):
             return
         if ret in ["p", "change price"]:
             newprice = input("Enter new price: ")
@@ -1346,13 +1346,13 @@ def nftsellbook(
 @click.option("--price-symbol", "-s", help="Limit to this price symbol")
 def nftopen(symbol, grouping, value, price_symbol):
     """Returns the open interest book for the given symbol"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
-    market = NftMarket(blockchain_instance=stm)
+    market = NftMarket(blockchain_instance=hv)
     nft = Nft(symbol)
     grouping_name = None
     grouping_value = None
@@ -1378,13 +1378,13 @@ def nftopen(symbol, grouping, value, price_symbol):
 @click.option("--account", "-a", help='Buy with this account (defaults to "default_account")')
 def nfttrades(symbol, account):
     """Returns the trades history"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
-    market = NftMarket(blockchain_instance=stm)
+    market = NftMarket(blockchain_instance=hv)
     if symbol is not None:
         nft = Nft(symbol)
         trades_history = market.get_trades_history(symbol, account)
@@ -1478,16 +1478,16 @@ def nfttrades(symbol, account):
 @click.option("--yes", "-y", help="Answer yes to all questions", is_flag=True, default=False)
 def nftbuy(symbol, nft_ids, account, market_account, yes):
     """Buy nfts from the market"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
     if account is None:
-        account = stm.config["default_account"]
-    market = NftMarket(blockchain_instance=stm)
-    if not unlock_wallet(stm):
+        account = hv.config["default_account"]
+    market = NftMarket(blockchain_instance=hv)
+    if not unlock_wallet(hv):
         return
     t = PrettyTable(["nftId", "previousAccount", "properties"])
     t.align = "l"
@@ -1520,16 +1520,16 @@ def nftbuy(symbol, nft_ids, account, market_account, yes):
 @click.option("--yes", "-y", help="Answer yes to all questions", is_flag=True, default=False)
 def nftsell(symbol, nft_ids, price, price_symbol, account, fee, yes):
     """Create a sell order on the market"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
     if account is None:
-        account = stm.config["default_account"]
-    market = NftMarket(blockchain_instance=stm)
-    if not unlock_wallet(stm):
+        account = hv.config["default_account"]
+    market = NftMarket(blockchain_instance=hv)
+    if not unlock_wallet(hv):
         return
     t = PrettyTable(["nftId", "account", "properties"])
     t.align = "l"
@@ -1559,16 +1559,16 @@ def nftsell(symbol, nft_ids, price, price_symbol, account, fee, yes):
 @click.option("--yes", "-y", help="Answer yes to all questions", is_flag=True, default=False)
 def nftchangeprice(symbol, nft_ids, newprice, account, yes):
     """Cancel a nft sell order"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
     if account is None:
-        account = stm.config["default_account"]
-    market = NftMarket(blockchain_instance=stm)
-    if not unlock_wallet(stm):
+        account = hv.config["default_account"]
+    market = NftMarket(blockchain_instance=hv)
+    if not unlock_wallet(hv):
         return
     t = PrettyTable(["nftId", "previousAccount", "properties"])
     t.align = "l"
@@ -1594,16 +1594,16 @@ def nftchangeprice(symbol, nft_ids, newprice, account, yes):
 @click.option("--yes", "-y", help="Answer yes to all questions", is_flag=True, default=False)
 def nftcancel(symbol, nft_ids, account, yes):
     """Cancel a nft sell order"""
-    stm = shared_blockchain_instance()
-    if stm.rpc is not None:
-        stm.rpc.rpcconnect()
-    if not stm.is_hive:
+    hv = shared_blockchain_instance()
+    if hv.rpc is not None:
+        hv.rpc.rpcconnect()
+    if not hv.is_hive:
         print("Please set a Hive node")
         return
     if account is None:
-        account = stm.config["default_account"]
-    market = NftMarket(blockchain_instance=stm)
-    if not unlock_wallet(stm):
+        account = hv.config["default_account"]
+    market = NftMarket(blockchain_instance=hv)
+    if not unlock_wallet(hv):
         return
     t = PrettyTable(["nftId", "previousAccount", "properties"])
     t.align = "l"

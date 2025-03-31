@@ -24,12 +24,12 @@ class Market(list):
            instance
     """
 
-    def __init__(self, api=None, blockchain_instance=None, steem_instance=None):
+    def __init__(self, api=None, blockchain_instance=None):
         if api is None:
             self.api = Api()
         else:
             self.api = api
-        self.blockchain = blockchain_instance or steem_instance or shared_blockchain_instance()
+        self.blockchain = blockchain_instance or shared_blockchain_instance()
         self.tokens = Tokens(api=self.api)
         self.ssc_id = "ssc-mainnet-hive"
         self.refresh()
@@ -121,10 +121,10 @@ class Market(list):
         .. code-block:: python
 
             from nectarengine.market import Market
-            from nectar import Steem
+            from nectar import Hive
             active_wif = "5xxxx"
-            stm = Steem(keys=[active_wif])
-            market = Market(blockchain_instance=stm)
+            hv = Hive(keys=[active_wif])
+            market = Market(blockchain_instance=hv)
             market.withdraw("test", 1)
         """
         wallet = Wallet(account, api=self.api, blockchain_instance=self.blockchain)
@@ -160,16 +160,16 @@ class Market(list):
         .. code-block:: python
 
             from nectarengine.market import Market
-            from nectar import Steem
+            from nectar import Hive
             active_wif = "5xxxx"
-            stm = Steem(keys=[active_wif])
-            market = Market(blockchain_instance=stm)
+            hv = Hive(keys=[active_wif])
+            market = Market(blockchain_instance=hv)
             market.deposit("test", 1)
         """
         acc = Account(account, blockchain_instance=self.blockchain)
-        steem_balance = acc.get_balance("available", "HIVE")
-        if float(steem_balance) < float(amount):
-            raise InsufficientTokenAmount("Only %.3f in wallet" % float(steem_balance))
+        hive_balance = acc.get_balance("available", "HIVE")
+        if float(hive_balance) < float(amount):
+            raise InsufficientTokenAmount("Only %.3f in wallet" % float(hive_balance))
         json_data = (
             '{"id":"'
             + self.ssc_id
@@ -191,10 +191,10 @@ class Market(list):
         .. code-block:: python
 
             from nectarengine.market import Market
-            from nectar import Steem
+            from nectar import Hive
             active_wif = "5xxxx"
-            stm = Steem(keys=[active_wif])
-            market = Market(blockchain_instance=stm)
+            hv = Hive(keys=[active_wif])
+            market = Market(blockchain_instance=hv)
             market.buy("test", 1, "BEE", 0.95)
         """
         wallet = Wallet(account, api=self.api, blockchain_instance=self.blockchain)
@@ -237,10 +237,10 @@ class Market(list):
         .. code-block:: python
 
             from nectarengine.market import Market
-            from nectar import Steem
+            from nectar import Hive
             active_wif = "5xxxx"
-            stm = Steem(keys=[active_wif])
-            market = Market(blockchain_instance=stm)
+            hv = Hive(keys=[active_wif])
+            market = Market(blockchain_instance=hv)
             market.sell("test", 1, "BEE", 0.95)
         """
         wallet = Wallet(account, api=self.api, blockchain_instance=self.blockchain)
@@ -282,10 +282,10 @@ class Market(list):
         .. code-block:: python
 
             from nectarengine.market import Market
-            from nectar import Steem
+            from nectar import Hive
             active_wif = "5xxxx"
-            stm = Steem(keys=[active_wif])
-            market = Market(blockchain_instance=stm)
+            hv = Hive(keys=[active_wif])
+            market = Market(blockchain_instance=hv)
             market.sell("test", "sell", 12)
         """
 

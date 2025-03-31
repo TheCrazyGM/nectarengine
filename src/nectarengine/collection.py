@@ -25,13 +25,13 @@ class Collection(dict):
 
     """
 
-    def __init__(self, account, api=None, blockchain_instance=None, steem_instance=None):
+    def __init__(self, account, api=None, blockchain_instance=None):
         if api is None:
             self.api = Api()
         else:
             self.api = api
         self.ssc_id = "ssc-mainnet-hive"
-        self.blockchain = blockchain_instance or steem_instance or shared_blockchain_instance()
+        self.blockchain = blockchain_instance or shared_blockchain_instance()
         check_account = Account(account, blockchain_instance=self.blockchain)
         self.account = check_account["name"]
         self.nfts = Nfts()

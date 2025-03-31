@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import time
 
-from nectar import Steem
+from nectar import Hive
 
 from nectarengine.wallet import Wallet
 
@@ -12,9 +12,9 @@ logging.basicConfig(level=logging.INFO)
 
 
 if __name__ == "__main__":
-    stm = Steem()
-    stm.wallet.unlock(pwd="wallet_pass")
-    wallet = Wallet("nectarbot", steem_instance=stm)
+    hv = Hive()
+    hv.wallet.unlock(pwd="wallet_pass")
+    wallet = Wallet("nectarbot", blockchain_instance=hv)
     dragon_token = wallet.get_token("DRAGON")
     if dragon_token is not None and float(dragon_token["balance"]) >= 0.01:
         print("balance %.2f" % float(dragon_token["balance"]))

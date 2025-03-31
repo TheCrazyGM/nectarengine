@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import time
 
-from nectar import Steem
+from nectar import Hive
 from nectar.comment import Comment
 from nectar.nodelist import NodeList
 
@@ -13,7 +13,7 @@ from nectarengine.wallet import Wallet
 if __name__ == "__main__":
     nodelist = NodeList()
     nodelist.update_nodes()
-    stm = Steem(node=nodelist.get_hive_nodes())
+    hv = Hive(node=nodelist.get_hive_nodes())
 
     # edit here
     upvote_account = "nectarbot"
@@ -25,9 +25,9 @@ if __name__ == "__main__":
     blacklist_tags = []  # When empty, the tag blacklist is disabled
     reply_comment = ""  # When empty, no reply comment is created
     only_main_posts = True
-    stm.wallet.unlock("wallet-passwd")
+    hv.wallet.unlock("wallet-passwd")
 
-    wallet = Wallet(upvote_account, steem_instance=stm)
+    wallet = Wallet(upvote_account, blockchain_instance=hv)
 
     last_steem_block = (
         1950  # It is a good idea to store this block, otherwise all transfers will be checked again
@@ -47,7 +47,7 @@ if __name__ == "__main__":
                 print("Below min token amount skipping...")
                 continue
             try:
-                c = Comment(h["memo"], steem_instance=stm)
+                c = Comment(h["memo"], blockchain_instance=hv)
             except:
                 print("%s is not a valid url, skipping" % h["memo"])
                 continue

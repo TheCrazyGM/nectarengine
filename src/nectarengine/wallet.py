@@ -33,13 +33,13 @@ class Wallet(list):
 
     """
 
-    def __init__(self, account, api=None, blockchain_instance=None, steem_instance=None):
+    def __init__(self, account, api=None, blockchain_instance=None):
         if api is None:
             self.api = Api()
         else:
             self.api = api
         self.ssc_id = "ssc-mainnet-hive"
-        self.blockchain = blockchain_instance or steem_instance or shared_blockchain_instance()
+        self.blockchain = blockchain_instance or shared_blockchain_instance()
         check_account = Account(account, blockchain_instance=self.blockchain)
         self.account = check_account["name"]
         self.refresh()
@@ -83,10 +83,10 @@ class Wallet(list):
         .. code-block:: python
 
             from nectarengine.wallet import Wallet
-            from nectar import Steem
+            from nectar import Hive
             active_wif = "5xxxx"
-            stm = Steem(keys=[active_wif])
-            wallet = Wallet("test", blockchain_instance=stm)
+            hv = Hive(keys=[active_wif])
+            wallet = Wallet("test", blockchain_instance=hv)
             wallet.transfer("test1", 1, "BEE", "test")
         """
         token_in_wallet = self.get_token(symbol)
@@ -127,10 +127,10 @@ class Wallet(list):
         .. code-block:: python
 
             from nectarengine.wallet import Wallet
-            from nectar import Steem
+            from nectar import Hive
             active_wif = "5xxxx"
-            stm = Steem(keys=[active_wif])
-            wallet = Wallet("test", blockchain_instance=stm)
+            hv = Hive(keys=[active_wif])
+            wallet = Wallet("test", blockchain_instance=hv)
             wallet.stake(1, "BEE")
         """
         token_in_wallet = self.get_token(symbol)
@@ -169,10 +169,10 @@ class Wallet(list):
         .. code-block:: python
 
             from nectarengine.wallet import Wallet
-            from nectar import Steem
+            from nectar import Hive
             active_wif = "5xxxx"
-            stm = Steem(keys=[active_wif])
-            wallet = Wallet("test", blockchain_instance=stm)
+            hv = Hive(keys=[active_wif])
+            wallet = Wallet("test", blockchain_instance=hv)
             wallet.unstake(1, "BEE")
         """
         token_in_wallet = self.get_token(symbol)
@@ -210,10 +210,10 @@ class Wallet(list):
         .. code-block:: python
 
             from nectarengine.wallet import Wallet
-            from nectar import Steem
+            from nectar import Hive
             active_wif = "5xxxx"
-            stm = Steem(keys=[active_wif])
-            wallet = Wallet("test", blockchain_instance=stm)
+            hv = Hive(keys=[active_wif])
+            wallet = Wallet("test", blockchain_instance=hv)
             wallet.stake("cf39ecb8b846f1efffb8db526fada21a5fcf41c3")
         """
         contract_payload = {"txID": trx_id}
@@ -239,10 +239,10 @@ class Wallet(list):
         .. code-block:: python
 
             from nectarengine.wallet import Wallet
-            from nectar import Steem
+            from nectar import Hive
             active_wif = "5xxxx"
-            stm = Steem(keys=[active_wif])
-            wallet = Wallet("test", blockchain_instance=stm)
+            hv = Hive(keys=[active_wif])
+            wallet = Wallet("test", blockchain_instance=hv)
             wallet.issue(1, "my_token")
         """
         token = Token(symbol, api=self.api)

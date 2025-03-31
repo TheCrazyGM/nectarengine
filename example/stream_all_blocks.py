@@ -44,7 +44,7 @@ if __name__ == "__main__":
                         if transfer["data"]["symbol"] in scan_token:
                             token_found = True
                     if token_found:
-                        steem_block = Block(block["refSteemBlockNumber"])
+                        steem_block = Block(block["refBlockNumber"])
                         print(
                             "%d (%s) - %s:"
                             % (
@@ -84,7 +84,7 @@ if __name__ == "__main__":
                         if transfer["data"]["symbol"] in scan_token:
                             token_found = True
                     if token_found:
-                        steem_block = Block(block["refSteemBlockNumber"])
+                        steem_block = Block(block["refBlockNumber"])
                         print(
                             "%d (%s) - %s"
                             % (
