@@ -12,11 +12,17 @@ class Api(object):
         if url is None:
             self.url = "https://enginerpc.com/"
         else:
-            self.url = url
+            # Ensure URL has trailing slash
+            self.url = url if url.endswith("/") else url + "/"
         if url is not None and rpcurl is None:
-            self.rpc = RPC(url=url)
+            # Pass the normalized URL to RPC
+            self.rpc = RPC(url=self.url)
         else:
-            self.rpc = RPC(url=rpcurl)
+            # If rpcurl is provided, normalize it as well
+            normalized_rpcurl = rpcurl
+            if rpcurl is not None and not rpcurl.endswith("/"):
+                normalized_rpcurl = rpcurl + "/"
+            self.rpc = RPC(url=normalized_rpcurl)
 
     def get_history(self, account, symbol, limit=1000, offset=0):
         """ "Get the transaction history for an account and a token"""

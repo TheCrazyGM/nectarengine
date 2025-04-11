@@ -104,7 +104,8 @@ class RPC(object):
         if url is None:
             self.url = "https://engine.thecrazygm.com/"
         else:
-            self.url = url
+            # Ensure URL has trailing slash
+            self.url = url if url.endswith("/") else url + "/"
         self.session = shared_session_instance()
         self.headers = {
             "User-Agent": "nectarengine v%s" % (nectarengine_version),
