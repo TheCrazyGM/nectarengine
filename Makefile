@@ -31,9 +31,6 @@ build: generate-versions
 install: build
 	uv pip install -e .
 
-install-user: build
-	uv pip install --user -e .
-
 git:
 	git push --all
 	git push --tags
@@ -42,15 +39,17 @@ check:
 	uv pip check
 
 dev-setup:
-	uv pip install --python-dev-deps -e .
+	uv sync --dev
 
 dist: generate-versions
 	uv build
-	uv publish
+	uvx uv-publish@latest --repo pypi
+	# uv publish
 
 test-dist: generate-versions
 	uv build
-	uv publish --index testpypi
+	uvx uv-publish@latest --repo testpypi
+	# uv publish --index testpypi
 
 docs:
 	# sphinx-apidoc -d 6 -e -f -o docs . *.py tests
