@@ -46,11 +46,11 @@ dev-setup:
 
 dist: generate-versions
 	uv build
-	python -m twine upload dist/*
+	uv publish
 
 test-dist: generate-versions
 	uv build
-	python -m twine upload --repository testpypi dist/* --verbose
+	uv publish --index testpypi
 
 docs:
 	# sphinx-apidoc -d 6 -e -f -o docs . *.py tests

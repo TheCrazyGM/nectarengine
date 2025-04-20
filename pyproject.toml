@@ -1,6 +1,6 @@
 [project]
 name = "nectarengine"
-version = "0.0.6"
+version = "0.0.7"
 description = "command line tool and python library for sending hive engine tokens"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -81,9 +81,11 @@ exclude = [
 [tool.uv]
 default-groups = []
 
-[tool.uv.sources]
-hive-nectar = { git = "https://github.com/thecrazygm/hive-nectar" }
-nectarengine = { git = "https://github.com/thecrazygm/nectarengine" }
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
 
 [dependency-groups]
 dev = [
@@ -92,5 +94,4 @@ dev = [
   "sphinx>=8.2.3",
   "sphinx-click>=6.0.0",
   "sphinx-rtd-theme>=3.0.2",
-  "twine>=6.1.0",
 ]

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.7
+
+- Replacing build system with uv
+
+## 0.0.6
+
+- Removed the need for `/` on the end of the rpc url
+
 ## 0.0.5
 
 - Added Pool Object to ease use of Liquidity Pools
