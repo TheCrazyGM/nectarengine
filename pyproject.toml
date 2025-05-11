@@ -1,9 +1,9 @@
 [project]
 name = "nectarengine"
-version = "0.0.7"
+version = "0.0.8"
 description = "command line tool and python library for sending hive engine tokens"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 license = { text = "MIT License" }
 authors = [
   { name = "Michael Garcia", email = "thecrazygm@gmail.com" },
@@ -39,7 +39,7 @@ requires = ["hatchling", "wheel"]
 build-backend = "hatchling.build"
 
 [tool.mypy]
-python_version = ">3.12"
+python_version = ">3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
@@ -50,7 +50,7 @@ python_files = ["test_*.py"]
 testpaths = ["tests"]
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py310"
 line-length = 100
 
 [tool.ruff.format]
@@ -91,7 +91,7 @@ explicit = true
 dev = [
   "tomli",
   "pytest",
-  "sphinx>=8.2.3",
-  "sphinx-click>=6.0.0",
-  "sphinx-rtd-theme>=3.0.2",
+  "sphinx",
+  "sphinx-click",
+  "sphinx-rtd-theme",
 ]

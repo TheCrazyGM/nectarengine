@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.8
+
+- Dropped python version down to 3.10 for compatibility
+
 ## 0.0.7
 
 - Replacing build system with uv
