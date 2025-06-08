@@ -108,6 +108,24 @@ class Pool(dict):
                 return None
         return None
 
+    def get_base_price(self) -> decimal.Decimal | None:
+        """
+        Returns the 'basePrice' from the pool data as a Decimal.
+        'basePrice' typically represents the price of the base token in terms of the quote token.
+        E.g., for 'SWAP.HIVE:SIM', it's SIM per SWAP.HIVE.
+        Returns None if 'basePrice' is not available or cannot be converted.
+        """
+        price_str = self.get("basePrice")
+        if price_str is not None:
+            try:
+                # Ensure it's a string before Decimal conversion for robustness
+                return decimal.Decimal(str(price_str))
+            except (decimal.InvalidOperation, TypeError):
+                # Optionally, log an error here if a logging mechanism is available/appropriate
+                # For now, returning None indicates failure to parse or absence.
+                return None
+        return None
+
     def calculate_tokens_out(self, token_symbol, token_amount_in):
         """Calculate the expected output amount for an exactInput swap
 
