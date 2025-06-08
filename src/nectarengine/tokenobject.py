@@ -38,11 +38,9 @@ class Token(dict):
 
     def get_info(self):
         """Returns information about the token"""
-        token = self.api.find_one("tokens", "tokens", query={"symbol": self.symbol})
-        if len(token) > 0:
-            return token[0]
-        else:
-            return token
+        # self.api.find_one now returns the token dictionary directly if found, or None otherwise.
+        token_data = self.api.find_one("tokens", "tokens", query={"symbol": self.symbol})
+        return token_data
 
     def get_holder(self, limit=1000, offset=0):
         """Returns all token holders"""

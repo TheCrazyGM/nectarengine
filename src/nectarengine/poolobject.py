@@ -17,6 +17,7 @@ class Pool(dict):
             self.api = Api()
         else:
             self.api = api
+
         if isinstance(token_pair, dict):
             self.token_pair = token_pair["tokenPair"]
             super(Pool, self).__init__(token_pair)
@@ -25,17 +26,17 @@ class Pool(dict):
             self.refresh()
 
     def refresh(self):
-        info = self.get_info()
-        if info:
-            super(Pool, self).update(info)
+        info_data = self.get_info()
+        if info_data:
+            super(Pool, self).update(info_data)
         else:
             raise PoolDoesNotExist(self.token_pair)
 
     def get_info(self):
         """Returns information about the liquidity pool"""
-        pool = self.api.find_one("marketpools", "pools", query={"tokenPair": self.token_pair})
-        if pool and isinstance(pool, list) and len(pool) > 0:
-            return pool[0]  # Return the first item in the list
+        pool_data = self.api.find_one("marketpools", "pools", query={"tokenPair": self.token_pair})
+        if pool_data and isinstance(pool_data, dict):
+            return pool_data
         return None
 
     def get_liquidity_positions(self, account=None, limit=100, offset=0):
@@ -47,10 +48,14 @@ class Pool(dict):
         if account is not None:
             query["account"] = account
 
-        positions = self.api.find(
+        return self.api.find(
             "marketpools", "liquidityPositions", query=query, limit=limit, offset=offset
         )
-        return positions
+
+    @property
+    def positions(self):
+        """Returns all liquidity positions for this pool (property wrapper for get_all_liquidity_positions with account=None)."""
+        return self.get_all_liquidity_positions(account=None)
 
     def get_all_liquidity_positions(self, account=None):
         """Returns all liquidity positions for this pool by looping through all pages
@@ -70,9 +75,38 @@ class Pool(dict):
 
     def calculate_price(self):
         """Calculate the current price based on the pool reserves"""
-        if "baseQuantity" in self and "quoteQuantity" in self and float(self["baseQuantity"]) > 0:
-            return decimal.Decimal(self["quoteQuantity"]) / decimal.Decimal(self["baseQuantity"])
+        # Ensure decimal conversion for accurate comparison and calculation
+        base_quantity_str = self.get("baseQuantity")
+        quote_quantity_str = self.get("quoteQuantity")
+
+        if base_quantity_str is not None and quote_quantity_str is not None:
+            try:
+                base_quantity = decimal.Decimal(str(base_quantity_str))
+                quote_quantity = decimal.Decimal(str(quote_quantity_str))
+                if base_quantity > decimal.Decimal("0"):
+                    return quote_quantity / base_quantity
+            except (decimal.InvalidOperation, TypeError):
+                # Failed to convert, treat as if price cannot be calculated
+                pass
         return decimal.Decimal("0")
+
+    def get_quote_price(self) -> decimal.Decimal | None:
+        """
+        Returns the 'quotePrice' from the pool data as a Decimal.
+        'quotePrice' typically represents the price of the quote token in terms of the base token.
+        E.g., for 'SWAP.HIVE:SIM', it's SWAP.HIVE per SIM.
+        Returns None if 'quotePrice' is not available or cannot be converted.
+        """
+        price_str = self.get("quotePrice")
+        if price_str is not None:
+            try:
+                # Ensure it's a string before Decimal conversion for robustness
+                return decimal.Decimal(str(price_str))
+            except (decimal.InvalidOperation, TypeError):
+                # Optionally, log an error here if a logging mechanism is available/appropriate
+                # For now, returning None indicates failure to parse or absence.
+                return None
+        return None
 
     def calculate_tokens_out(self, token_symbol, token_amount_in):
         """Calculate the expected output amount for an exactInput swap

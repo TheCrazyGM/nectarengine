@@ -85,7 +85,14 @@ class Api(object):
             {"contract": contract_name, "table": table_name, "query": query},
             endpoint="contracts",
         )
-        return ret
+        # If rpc.findOne wraps the result in a list, unwrap it.
+        if isinstance(ret, list) and len(ret) == 1 and isinstance(ret[0], dict):
+            return ret[0]
+        # If rpc.findOne returns a dictionary directly (expected case for a 'findOne' operation)
+        elif isinstance(ret, dict):
+            return ret
+        # Otherwise, it's not found or an unexpected format
+        return None
 
     def find(self, contract_name, table_name, query={}, limit=1000, offset=0, indexes=[]):
         """Get an array of objects that match the query from the table of the specified contract"""

@@ -20,6 +20,12 @@ class TokenNotInWallet(Exception):
     pass
 
 
+class TransactionConfirmationError(Exception):
+    """Raised when a Hive Engine transaction fails to confirm or contains errors after retries."""
+
+    pass
+
+
 class InsufficientTokenAmount(Exception):
     """Not suffienct amount for transfer in the wallet"""
 

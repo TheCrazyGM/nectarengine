@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.9
+
+- Fixed quite a few issues with the liquidity pool and some token objects
+
 ## 0.0.8
 
 - Dropped python version down to 3.10 for compatibility

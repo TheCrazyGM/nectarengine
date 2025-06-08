@@ -1,9 +1,12 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import decimal
+import logging
 
+# Third-party imports
 from nectar.instance import shared_blockchain_instance
 
+# Local application imports
 from nectarengine.api import Api
 from nectarengine.exceptions import (
     InsufficientTokenAmount,
@@ -15,6 +18,8 @@ from nectarengine.poolobject import Pool
 from nectarengine.tokenobject import Token
 from nectarengine.tokens import Tokens
 from nectarengine.wallet import Wallet
+
+log = logging.getLogger(__name__)
 
 
 class LiquidityPool(list):
@@ -156,7 +161,35 @@ class LiquidityPool(list):
         }
 
         if min_amount_out is not None and trade_type == "exactInput":
-            contract_payload["minAmountOut"] = str(min_amount_out)
+            # Determine output token symbol
+            base_sym, quote_sym = token_pair.upper().split(":")
+            output_token_symbol = base_sym if token_symbol.upper() == quote_sym else quote_sym
+
+            # Get precision of the output token
+            output_token_details = self.tokens.get_token(output_token_symbol)
+            if not output_token_details:
+                # This should ideally not happen if the pool and tokens are valid
+                raise ValueError(
+                    f"Could not get details for output token {output_token_symbol} to determine precision for minAmountOut."
+                )
+            # Assuming output_token_details is a Token object or dict-like with 'precision'
+            output_precision = output_token_details["precision"]
+
+            # Ensure min_amount_out is a Decimal, then format it
+            try:
+                min_amount_out_decimal = decimal.Decimal(
+                    str(min_amount_out)
+                )  # Convert to string first for robust Decimal conversion
+            except decimal.InvalidOperation:
+                raise InvalidTokenAmount(
+                    f"min_amount_out '{min_amount_out}' is not a valid number."
+                )
+
+            quantizer = decimal.Decimal(f"1e-{output_precision}")
+            formatted_min_amount_out = str(
+                min_amount_out_decimal.quantize(quantizer, rounding=decimal.ROUND_DOWN)
+            )
+            contract_payload["minAmountOut"] = formatted_min_amount_out
         if max_amount_in is not None and trade_type == "exactOutput":
             contract_payload["maxAmountIn"] = str(max_amount_in)
 
