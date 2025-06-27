@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.0
+
+- Fully typed codebase
+
 ## 0.0.9
 
 - Fixed quite a few issues with the liquidity pool and some token objects

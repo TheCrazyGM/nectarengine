@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import decimal
+from typing import Any, Dict, List, Optional
 
 from nectar.account import Account
 from nectar.instance import shared_blockchain_instance
@@ -24,7 +25,9 @@ class Market(list):
            instance
     """
 
-    def __init__(self, api=None, blockchain_instance=None):
+    def __init__(
+        self, api: Optional[Api] = None, blockchain_instance: Optional[Any] = None
+    ) -> None:
         if api is None:
             self.api = Api()
         else:
@@ -34,19 +37,21 @@ class Market(list):
         self.ssc_id = "ssc-mainnet-hive"
         self.refresh()
 
-    def refresh(self):
+    def refresh(self) -> None:
         super(Market, self).__init__(self.get_metrics())
 
-    def set_id(self, ssc_id):
+    def set_id(self, ssc_id: str) -> None:
         """Sets the ssc id (default is ssc-mainnet-hive)"""
         self.ssc_id = ssc_id
 
-    def get_metrics(self):
+    def get_metrics(self) -> List[Dict[str, Any]]:
         """Returns all token within the wallet as list"""
         metrics = self.api.find("market", "metrics", query={})
         return metrics
 
-    def get_buy_book(self, symbol, account=None, limit=100, offset=0):
+    def get_buy_book(
+        self, symbol: str, account: Optional[str] = None, limit: int = 100, offset: int = 0
+    ) -> List[Dict[str, Any]]:
         """Returns the buy book for a given symbol. When account is set,
         the order book from the given account is shown.
         """
@@ -66,7 +71,9 @@ class Market(list):
             )
         return buy_book
 
-    def get_sell_book(self, symbol, account=None, limit=100, offset=0):
+    def get_sell_book(
+        self, symbol: str, account: Optional[str] = None, limit: int = 100, offset: int = 0
+    ) -> List[Dict[str, Any]]:
         """Returns the sell book for a given symbol. When account is set,
         the order book from the given account is shown.
         """
@@ -86,7 +93,9 @@ class Market(list):
             )
         return sell_book
 
-    def get_trades_history(self, symbol, account=None, limit=30, offset=0):
+    def get_trades_history(
+        self, symbol: str, account: Optional[str] = None, limit: int = 30, offset: int = 0
+    ) -> List[Dict[str, Any]]:
         """Returns the trade history for a given symbol. When account is set,
         the trade history from the given account is shown.
         """
@@ -110,7 +119,7 @@ class Market(list):
             )
         return trades_history
 
-    def withdraw(self, account, amount):
+    def withdraw(self, account: str, amount: float) -> Dict[str, Any]:
         """Widthdraw SWAP.HIVE to account as HIVE.
 
         :param str account: account name
@@ -149,7 +158,7 @@ class Market(list):
         tx = self.blockchain.custom_json(self.ssc_id, json_data, required_auths=[account])
         return tx
 
-    def deposit(self, account, amount):
+    def deposit(self, account: str, amount: float) -> Dict[str, Any]:
         """Deposit HIVE to market in exchange for SWAP.HIVE.
 
         :param str account: account name
@@ -178,7 +187,7 @@ class Market(list):
         tx = acc.transfer("honey-swap", amount, "HIVE", memo=json_data)
         return tx
 
-    def buy(self, account, amount, symbol, price):
+    def buy(self, account: str, amount: float, symbol: str, price: float) -> Dict[str, Any]:
         """Buy token for given price.
 
         :param str account: account name
@@ -224,7 +233,7 @@ class Market(list):
         tx = self.blockchain.custom_json(self.ssc_id, json_data, required_auths=[account])
         return tx
 
-    def sell(self, account, amount, symbol, price):
+    def sell(self, account: str, amount: float, symbol: str, price: float) -> Dict[str, Any]:
         """Sell token for given price.
 
         :param str account: account name
@@ -270,7 +279,7 @@ class Market(list):
         tx = self.blockchain.custom_json(self.ssc_id, json_data, required_auths=[account])
         return tx
 
-    def cancel(self, account, order_type, order_id):
+    def cancel(self, account: str, order_type: str, order_id: int) -> Dict[str, Any]:
         """Cancel buy/sell order.
 
         :param str account: account name

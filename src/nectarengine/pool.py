@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import decimal
 import logging
+from typing import Any, Dict, List, Optional
 
 # Third-party imports
 from nectar.instance import shared_blockchain_instance
@@ -29,7 +30,9 @@ class LiquidityPool(list):
            instance
     """
 
-    def __init__(self, api=None, blockchain_instance=None):
+    def __init__(
+        self, api: Optional[Api] = None, blockchain_instance: Optional[Any] = None
+    ) -> None:
         if api is None:
             self.api = Api()
         else:
@@ -39,19 +42,19 @@ class LiquidityPool(list):
         self.ssc_id = "ssc-mainnet-hive"
         self.refresh()
 
-    def refresh(self):
+    def refresh(self) -> None:
         super(LiquidityPool, self).__init__(self.get_pools())
 
-    def set_id(self, ssc_id):
+    def set_id(self, ssc_id: str) -> None:
         """Sets the ssc id (default is ssc-mainnet-hive)"""
         self.ssc_id = ssc_id
 
-    def get_pools(self):
+    def get_pools(self) -> List[Dict[str, Any]]:
         """Returns all liquidity pools as list"""
         pools = self.api.find("marketpools", "pools", query={})
         return pools
 
-    def get_pool(self, token_pair):
+    def get_pool(self, token_pair: str) -> Pool:
         """Returns a specific liquidity pool for a given token pair
 
         :param str token_pair: Token pair in the format 'TOKEN1:TOKEN2'
@@ -64,12 +67,18 @@ class LiquidityPool(list):
         except PoolDoesNotExist:
             raise PoolDoesNotExist(token_pair)
 
-    def get_liquidity_positions(self, account=None, token_pair=None, limit=100, offset=0):
+    def get_liquidity_positions(
+        self,
+        account: Optional[str] = None,
+        token_pair: Optional[str] = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
         """Returns liquidity positions. When account is set,
         only positions from the given account are shown. When token_pair is set,
         only positions for the given token pair are shown.
         """
-        query = {}
+        query: Dict[str, Any] = {}
         if account is not None:
             query["account"] = account
         if token_pair is not None:
@@ -80,7 +89,7 @@ class LiquidityPool(list):
         )
         return positions
 
-    def create_pool(self, account, token_pair):
+    def create_pool(self, account: str, token_pair: str) -> Dict[str, Any]:
         """Create a new liquidity pool for a token pair.
 
         :param str account: account name
@@ -109,14 +118,14 @@ class LiquidityPool(list):
 
     def swap_tokens(
         self,
-        account,
-        token_pair,
-        token_symbol,
-        token_amount,
-        trade_type,
-        min_amount_out=None,
-        max_amount_in=None,
-    ):
+        account: str,
+        token_pair: str,
+        token_symbol: str,
+        token_amount: float,
+        trade_type: str,
+        min_amount_out: Optional[float] = None,
+        max_amount_in: Optional[float] = None,
+    ) -> Dict[str, Any]:
         """Swap tokens using a liquidity pool.
 
         :param str account: account name
@@ -153,7 +162,7 @@ class LiquidityPool(list):
                 "Amount to transfer is below token precision of %d" % token["precision"]
             )
 
-        contract_payload = {
+        contract_payload: Dict[str, Any] = {
             "tokenPair": token_pair.upper(),
             "tokenSymbol": token_symbol.upper(),
             "tokenAmount": str(quant_amount),
@@ -204,13 +213,13 @@ class LiquidityPool(list):
 
     def add_liquidity(
         self,
-        account,
-        token_pair,
-        base_quantity,
-        quote_quantity,
-        max_price_impact=None,
-        max_deviation=None,
-    ):
+        account: str,
+        token_pair: str,
+        base_quantity: float,
+        quote_quantity: float,
+        max_price_impact: Optional[float] = None,
+        max_deviation: Optional[float] = None,
+    ) -> Dict[str, Any]:
         """Add liquidity to a pool.
 
         :param str account: account name
@@ -256,7 +265,7 @@ class LiquidityPool(list):
                 "Only %.3f %s in wallet" % (float(quote_token_in_wallet["balance"]), quote_token)
             )
 
-        contract_payload = {
+        contract_payload: Dict[str, Any] = {
             "tokenPair": token_pair.upper(),
             "baseQuantity": str(base_quantity),
             "quoteQuantity": str(quote_quantity),
@@ -276,7 +285,7 @@ class LiquidityPool(list):
         tx = self.blockchain.custom_json(self.ssc_id, json_data, required_auths=[account])
         return tx
 
-    def remove_liquidity(self, account, token_pair, shares_out):
+    def remove_liquidity(self, account: str, token_pair: str, shares_out: float) -> Dict[str, Any]:
         """Remove liquidity from a pool.
 
         :param str account: account name
@@ -313,13 +322,13 @@ class LiquidityPool(list):
 
     def create_reward_pool(
         self,
-        account,
-        token_pair,
-        lottery_winners,
-        lottery_interval_hours,
-        lottery_amount,
-        mined_token,
-    ):
+        account: str,
+        token_pair: str,
+        lottery_winners: int,
+        lottery_interval_hours: int,
+        lottery_amount: float,
+        mined_token: str,
+    ) -> Dict[str, Any]:
         """Create a reward pool for liquidity providers.
 
         :param str account: account name
@@ -362,7 +371,9 @@ class LiquidityPool(list):
         tx = self.blockchain.custom_json(self.ssc_id, json_data, required_auths=[account])
         return tx
 
-    def set_reward_pool_active(self, account, token_pair, mined_token, active):
+    def set_reward_pool_active(
+        self, account: str, token_pair: str, mined_token: str, active: bool
+    ) -> Dict[str, Any]:
         """Enable or disable a reward pool.
 
         :param str account: account name

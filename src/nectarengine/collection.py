@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from typing import Any, Dict, List, Optional
+
 from nectar.account import Account
 from nectar.instance import shared_blockchain_instance
 
@@ -25,7 +27,9 @@ class Collection(dict):
 
     """
 
-    def __init__(self, account, api=None, blockchain_instance=None):
+    def __init__(
+        self, account: str, api: Optional[Api] = None, blockchain_instance: Optional[Any] = None
+    ) -> None:
         if api is None:
             self.api = Api()
         else:
@@ -37,16 +41,16 @@ class Collection(dict):
         self.nfts = Nfts()
         self.refresh()
 
-    def refresh(self):
+    def refresh(self) -> None:
         super(Collection, self).__init__(self.get_collection())
 
-    def set_id(self, ssc_id):
+    def set_id(self, ssc_id: str) -> None:
         """Sets the ssc id (default is ssc-mainnet-hive)"""
         self.ssc_id = ssc_id
 
-    def get_collection(self):
+    def get_collection(self) -> Dict[str, List[Dict[str, Any]]]:
         """Returns all token within the wallet as list"""
-        collection = {}
+        collection: Dict[str, List[Dict[str, Any]]] = {}
         for symbol in self.nfts.get_symbol_list():
             nft = Nft(symbol)
             tokenlist = nft.get_collection(self.account)
@@ -54,20 +58,22 @@ class Collection(dict):
                 collection[symbol] = tokenlist
         return collection
 
-    def change_account(self, account):
+    def change_account(self, account: str) -> None:
         """Changes the wallet account"""
         check_account = Account(account, blockchain_instance=self.blockchain)
         self.account = check_account["name"]
         self.refresh()
 
-    def get_nft(self, nft_id, symbol):
+    def get_nft(self, nft_id: str, symbol: str) -> Optional[Dict[str, Any]]:
         """Returns a token from the wallet. Is None when not available."""
         for token in self[symbol]:
             if token["_id"].lower() == nft_id:
                 return token
         return None
 
-    def transfer(self, to, nfts, from_type="user", to_type="user"):
+    def transfer(
+        self, to: str, nfts: List[Dict[str, Any]], from_type: str = "user", to_type: str = "user"
+    ) -> Dict[str, Any]:
         """Transfer a token to another account.
 
         :param str to: Recipient
@@ -91,7 +97,7 @@ class Collection(dict):
         assert from_type in ["user", "contract"]
         assert to_type in ["user", "contract"]
         assert len(nfts) > 0
-        contract_payload = {"to": to, "nfts": nfts}
+        contract_payload: Dict[str, Any] = {"to": to, "nfts": nfts}
         if from_type == "contract":
             contract_payload["fromType"] = from_type
         if to_type == "contract":
@@ -105,7 +111,7 @@ class Collection(dict):
         tx = self.blockchain.custom_json(self.ssc_id, json_data, required_auths=[self.account])
         return tx
 
-    def burn(self, nfts):
+    def burn(self, nfts: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Burn a token
 
         :param list nfts: Amount to transfer
@@ -133,7 +139,9 @@ class Collection(dict):
         tx = self.blockchain.custom_json(self.ssc_id, json_data, required_auths=[self.account])
         return tx
 
-    def delegate(self, to, nfts, from_type="user", to_type="user"):
+    def delegate(
+        self, to: str, nfts: List[Dict[str, Any]], from_type: str = "user", to_type: str = "user"
+    ) -> Dict[str, Any]:
         """Delegate a token to another account.
 
         :param str to: Recipient
@@ -156,7 +164,7 @@ class Collection(dict):
         assert len(nfts) > 0
         assert from_type in ["user", "contract"]
         assert to_type in ["user", "contract"]
-        contract_payload = {"to": to, "nfts": nfts}
+        contract_payload: Dict[str, Any] = {"to": to, "nfts": nfts}
         if from_type == "contract":
             contract_payload["fromType"] = from_type
         if to_type == "contract":
@@ -170,7 +178,9 @@ class Collection(dict):
         tx = self.blockchain.custom_json(self.ssc_id, json_data, required_auths=[self.account])
         return tx
 
-    def undelegate(self, to, nfts, from_type="user"):
+    def undelegate(
+        self, to: str, nfts: List[Dict[str, Any]], from_type: str = "user"
+    ) -> Dict[str, Any]:
         """Undelegate a token to another account.
 
         :param str to: Recipient
@@ -191,7 +201,7 @@ class Collection(dict):
         """
         assert len(nfts) > 0
         assert from_type in ["user", "contract"]
-        contract_payload = {"nfts": nfts}
+        contract_payload: Dict[str, Any] = {"nfts": nfts}
         if from_type == "contract":
             contract_payload["fromType"] = from_type
         json_data = {

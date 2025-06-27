@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from typing import Any, Dict, List, Optional, Union
+
 from nectar.instance import shared_blockchain_instance
 
 from nectarengine.api import Api
@@ -9,7 +11,12 @@ from nectarengine.exceptions import NftDoesNotExists
 class Nft(dict):
     """Access the hive-engine Nfts"""
 
-    def __init__(self, symbol, api=None, blockchain_instance=None):
+    def __init__(
+        self,
+        symbol: Union[str, Dict[str, Any]],
+        api: Optional[Api] = None,
+        blockchain_instance: Optional[Any] = None,
+    ) -> None:
         if api is None:
             self.api = Api()
         else:
@@ -23,47 +30,53 @@ class Nft(dict):
             self.symbol = symbol.upper()
             self.refresh()
 
-    def refresh(self):
+    def refresh(self) -> None:
         info = self.get_info()
         if info is None:
             raise NftDoesNotExists("Nft %s does not exists!" % self.symbol)
         super(Nft, self).__init__(info)
 
-    def get_info(self):
+    def get_info(self) -> Optional[Dict[str, Any]]:
         """Returns information about the nft"""
         token = self.api.find_one("nft", "nfts", query={"symbol": self.symbol})
-        if len(token) > 0:
+        if token and isinstance(token, list) and len(token) > 0:
             return token[0]
-        else:
+        elif token and isinstance(token, dict):
             return token
+        else:
+            return None
 
     @property
-    def properties(self):
+    def properties(self) -> List[str]:
         return list(self["properties"].keys())
 
     @property
-    def issuer(self):
+    def issuer(self) -> str:
         return self["issuer"]
 
-    def get_property(self, property_name):
+    def get_property(self, property_name: str) -> List[Dict[str, Any]]:
         """Returns all token properties"""
         return self.api.find_all(
             "nft", "%sinstances" % self.symbol, query={"properties.name": property_name}
         )
 
-    def get_collection(self, account):
+    def get_collection(self, account: str) -> List[Dict[str, Any]]:
         """Get NFT collection"""
         tokens = self.api.find_all("nft", "%sinstances" % self.symbol, query={"account": account})
         return tokens
 
-    def get_id(self, _id):
+    def get_id(self, _id: int) -> Optional[Dict[str, Any]]:
         """Get info about a token"""
         tokens = self.api.find_one("nft", "%sinstances" % self.symbol, query={"_id": _id})
-        if len(tokens) > 0:
+        if tokens and isinstance(tokens, list) and len(tokens) > 0:
             return tokens[0]
-        return tokens
+        elif tokens and isinstance(tokens, dict):
+            return tokens
+        return None
 
-    def get_trade_history(self, query={}, limit=-1, offset=0):
+    def get_trade_history(
+        self, query: Dict[str, Any] = {}, limit: int = -1, offset: int = 0
+    ) -> List[Dict[str, Any]]:
         """Returns market information
         :param dict query: can be priceSymbol, timestamp
         """
@@ -78,7 +91,9 @@ class Nft(dict):
                 offset=offset,
             )
 
-    def get_open_interest(self, query={}, limit=-1, offset=0):
+    def get_open_interest(
+        self, query: Dict[str, Any] = {}, limit: int = -1, offset: int = 0
+    ) -> List[Dict[str, Any]]:
         """Returns open interests
         :param dict query: side, priceSymbol, grouping
         """
@@ -89,7 +104,9 @@ class Nft(dict):
                 "nftmarket", "%sopenInterest" % self.symbol, query=query, limit=limit, offset=offset
             )
 
-    def get_sell_book(self, query={}, limit=-1, offset=0):
+    def get_sell_book(
+        self, query: Dict[str, Any] = {}, limit: int = -1, offset: int = 0
+    ) -> List[Dict[str, Any]]:
         """Returns the sell book
         :param dict query: can be ownedBy, account, nftId, grouping, priceSymbol
         """
@@ -100,7 +117,7 @@ class Nft(dict):
                 "nftmarket", "%ssellBook" % self.symbol, query=query, limit=limit, offset=offset
             )
 
-    def update_url(self, url):
+    def update_url(self, url: str) -> Dict[str, Any]:
         """Updates the NFT project website
 
         :param str url: new url
@@ -128,7 +145,7 @@ class Nft(dict):
         )
         return tx
 
-    def update_metadata(self, metadata):
+    def update_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Updates the metadata of a token.
 
         :param dict medadata: new medadata
@@ -159,7 +176,7 @@ class Nft(dict):
         )
         return tx
 
-    def update_name(self, name):
+    def update_name(self, name: str) -> Dict[str, Any]:
         """Updates the user friendly name of an NFT.
 
         :param str name: new name
@@ -187,7 +204,7 @@ class Nft(dict):
         )
         return tx
 
-    def update_org_name(self, org_name):
+    def update_org_name(self, org_name: str) -> Dict[str, Any]:
         """Updates the name of the company/organization that manages an NFT.
 
         :param str org_name: new org_name
@@ -215,7 +232,7 @@ class Nft(dict):
         )
         return tx
 
-    def update_product_name(self, product_name):
+    def update_product_name(self, product_name: str) -> Dict[str, Any]:
         """Updates the name of the company/organization that manages an NFT.
 
         :param str org_name: new org_name
@@ -243,7 +260,7 @@ class Nft(dict):
         )
         return tx
 
-    def add_authorized_issuing_accounts(self, accounts):
+    def add_authorized_issuing_accounts(self, accounts: List[str]) -> Dict[str, Any]:
         """Adds Hive accounts to the list of accounts that are authorized to issue
         new tokens on behalf of the NFT owner.
 
@@ -270,7 +287,7 @@ class Nft(dict):
         tx = self.blockchain.custom_json(self.ssc_id, json_data, required_auths=[self["issuer"]])
         return tx
 
-    def add_authorized_issuing_contracts(self, contracts):
+    def add_authorized_issuing_contracts(self, contracts: List[str]) -> Dict[str, Any]:
         """Adds smart contracts to the list of contracts that are authorized to issue
         new tokens on behalf of the NFT owner.
 
@@ -297,7 +314,7 @@ class Nft(dict):
         tx = self.blockchain.custom_json(self.ssc_id, json_data, required_auths=[self["issuer"]])
         return tx
 
-    def remove_authorized_issuing_accounts(self, accounts):
+    def remove_authorized_issuing_accounts(self, accounts: List[str]) -> Dict[str, Any]:
         """Removes Hive accounts from the list of accounts that are authorized to issue
         new tokens on behalf of the NFT owner.
 
@@ -324,7 +341,7 @@ class Nft(dict):
         tx = self.blockchain.custom_json(self.ssc_id, json_data, required_auths=[self["issuer"]])
         return tx
 
-    def remove_authorized_issuing_contracts(self, contracts):
+    def remove_authorized_issuing_contracts(self, contracts: List[str]) -> Dict[str, Any]:
         """Remvoes smart contracts from the list of contracts that are authorized to issue
         new tokens on behalf of the NFT owner.
 
@@ -351,7 +368,7 @@ class Nft(dict):
         tx = self.blockchain.custom_json(self.ssc_id, json_data, required_auths=[self["issuer"]])
         return tx
 
-    def transfer_ownership(self, to):
+    def transfer_ownership(self, to: str) -> Dict[str, Any]:
         """Transfers ownership of an NFT from the current owner to another Hive account.
 
         :param str to: Hive accounts to become the new owner
@@ -379,12 +396,12 @@ class Nft(dict):
 
     def add_property(
         self,
-        name,
-        prop_type,
-        is_read_only=None,
-        authorized_editing_accounts=None,
-        authorized_editing_contracts=None,
-    ):
+        name: str,
+        prop_type: str,
+        is_read_only: Optional[bool] = None,
+        authorized_editing_accounts: Optional[List[str]] = None,
+        authorized_editing_contracts: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """Adds a new data property schema to an existing NFT definition
 
         :param str name: Name of the new property
@@ -404,7 +421,11 @@ class Nft(dict):
             nft = Nft("TESTNFT", blockchain_instance=hive)
             nft.add_property("color", "string")
         """
-        contract_payload = {"symbol": self.symbol.upper(), "name": name, "type": prop_type}
+        contract_payload: Dict[str, Any] = {
+            "symbol": self.symbol.upper(),
+            "name": name,
+            "type": prop_type,
+        }
         if is_read_only is not None:
             contract_payload["isReadOnly"] = is_read_only
         if authorized_editing_accounts is not None:
@@ -420,7 +441,9 @@ class Nft(dict):
         tx = self.blockchain.custom_json(self.ssc_id, json_data, required_auths=[self["issuer"]])
         return tx
 
-    def set_property_permissions(self, name, accounts=None, contracts=None):
+    def set_property_permissions(
+        self, name: str, accounts: Optional[List[str]] = None, contracts: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
         """Can be used after calling the addProperty action to change the lists of
         authorized editing accounts & contracts for a given data property.
 
@@ -439,7 +462,7 @@ class Nft(dict):
              nft = Nft("TESTNFT", blockchain_instance=hive)
              nft.set_property_permissions("color", accounts=["cryptomancer","marc"])
         """
-        contract_payload = {"symbol": self.symbol.upper(), "name": name}
+        contract_payload: Dict[str, Any] = {"symbol": self.symbol.upper(), "name": name}
         if accounts is not None:
             contract_payload["accounts"] = accounts
         if contracts is not None:
@@ -453,7 +476,12 @@ class Nft(dict):
         tx = self.blockchain.custom_json(self.ssc_id, json_data, required_auths=[self["issuer"]])
         return tx
 
-    def set_properties(self, nfts, from_type=None, authorized_account=None):
+    def set_properties(
+        self,
+        nfts: List[Dict[str, Any]],
+        from_type: Optional[str] = None,
+        authorized_account: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Edits one or more data properties on one or more instances of an NFT.
 
         :param list nfts:
@@ -473,7 +501,7 @@ class Nft(dict):
         """
         if authorized_account is None:
             authorized_account = self["issuer"]
-        contract_payload = {"symbol": self.symbol.upper(), "nfts": nfts}
+        contract_payload: Dict[str, Any] = {"symbol": self.symbol.upper(), "nfts": nfts}
         if from_type is not None:
             contract_payload["fromType"] = from_type
         json_data = {
@@ -487,7 +515,7 @@ class Nft(dict):
         )
         return tx
 
-    def set_group_by(self, properties):
+    def set_group_by(self, properties: List[str]) -> Dict[str, Any]:
         """Can be used after calling the addProperty action to change the lists of
         authorized editing accounts & contracts for a given data property.
 
@@ -514,7 +542,13 @@ class Nft(dict):
         tx = self.blockchain.custom_json(self.ssc_id, json_data, required_auths=[self["issuer"]])
         return tx
 
-    def update_property_definition(self, name, new_name=None, prop_type=None, is_read_only=None):
+    def update_property_definition(
+        self,
+        name: str,
+        new_name: Optional[str] = None,
+        prop_type: Optional[str] = None,
+        is_read_only: Optional[bool] = None,
+    ) -> Dict[str, Any]:
         """Updates the schema of a data property.
         This action can only be called if no tokens for this NFT have been issued yet.
 
@@ -535,7 +569,7 @@ class Nft(dict):
             nft = Nft("TESTNFT", blockchain_instance=hive)
             nft.update_property_definition("color", new_name="Color")
         """
-        contract_payload = {"symbol": self.symbol.upper(), "name": name}
+        contract_payload: Dict[str, Any] = {"symbol": self.symbol.upper(), "name": name}
         if new_name is not None:
             contract_payload["newName"] = new_name
         if prop_type is not None:
@@ -553,15 +587,15 @@ class Nft(dict):
 
     def issue(
         self,
-        to,
-        fee_symbol,
-        from_type=None,
-        to_type=None,
-        lock_tokens=None,
-        lock_nfts=None,
-        properties=None,
-        authorized_account=None,
-    ):
+        to: str,
+        fee_symbol: str,
+        from_type: Optional[str] = None,
+        to_type: Optional[str] = None,
+        lock_tokens: Optional[Dict[str, Any]] = None,
+        lock_nfts: Optional[List[str]] = None,
+        properties: Optional[Dict[str, Any]] = None,
+        authorized_account: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Issues a new instance of an NFT to a Hive account or smart contract.
 
         :param str to:
@@ -586,7 +620,11 @@ class Nft(dict):
         """
         if authorized_account is None:
             authorized_account = self["issuer"]
-        contract_payload = {"symbol": self.symbol.upper(), "to": to, "feeSymbol": fee_symbol}
+        contract_payload: Dict[str, Any] = {
+            "symbol": self.symbol.upper(),
+            "to": to,
+            "feeSymbol": fee_symbol,
+        }
         if from_type is not None:
             contract_payload["fromType"] = from_type
         if to_type is not None:
@@ -609,7 +647,9 @@ class Nft(dict):
         )
         return tx
 
-    def issue_multiple(self, instances, authorized_account=None):
+    def issue_multiple(
+        self, instances: List[Dict[str, Any]], authorized_account: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Issues multiple NFT instances at once.
 
         :param list instances:
@@ -640,7 +680,7 @@ class Nft(dict):
         )
         return tx
 
-    def enable_delegation(self, undelegation_cooldown):
+    def enable_delegation(self, undelegation_cooldown: int) -> Dict[str, Any]:
         """Enables the delegation feature for a NFT
 
         :param int undelegation_cooldown: Cooldown in days

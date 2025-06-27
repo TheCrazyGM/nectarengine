@@ -7,6 +7,7 @@ import logging
 import re
 import sys
 from builtins import object, str
+from typing import Any, Dict, List, Optional, Union
 
 from .version import version as nectarengine_version
 
@@ -51,15 +52,15 @@ class UnauthorizedError(Exception):
 class SessionInstance(object):
     """Singelton for the Session Instance"""
 
-    instance = None
+    instance: Optional[requests.Session] = None
 
 
-def set_session_instance(instance):
+def set_session_instance(instance: requests.Session) -> None:
     """Set session instance"""
     SessionInstance.instance = instance
 
 
-def shared_session_instance():
+def shared_session_instance() -> requests.Session:
     """Get session instance"""
     if REQUEST_MODULE is None:
         raise Exception()
@@ -68,7 +69,7 @@ def shared_session_instance():
     return SessionInstance.instance
 
 
-def get_endpoint_name(*args, **kwargs):
+def get_endpoint_name(*args: Any, **kwargs: Any) -> str:
     # Sepcify the endpoint to talk to
     endpoint = "contracts"
     if ("endpoint" in kwargs) and len(kwargs["endpoint"]) > 0:
@@ -92,7 +93,13 @@ class RPC(object):
 
     """
 
-    def __init__(self, url=None, user=None, password=None, **kwargs):
+    def __init__(
+        self,
+        url: Optional[str] = None,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
         """Init."""
         self._request_id = 0
         self.timeout = kwargs.get("timeout", 60)
@@ -111,14 +118,14 @@ class RPC(object):
             "User-Agent": "nectarengine v%s" % (nectarengine_version),
             "content-type": "application/json",
         }
-        self.rpc_queue = []
+        self.rpc_queue: List[Dict[str, Any]] = []
 
-    def get_request_id(self):
+    def get_request_id(self) -> int:
         """Get request id."""
         self._request_id += 1
         return self._request_id
 
-    def request_send(self, endpoint, payload):
+    def request_send(self, endpoint: str, payload: bytes) -> str:
         if self.user is not None and self.password is not None:
             response = self.session.post(
                 self.url + endpoint,
@@ -138,11 +145,11 @@ class RPC(object):
             raise UnauthorizedError
         return response.text
 
-    def version_string_to_int(self, network_version):
+    def version_string_to_int(self, network_version: str) -> int:
         version_list = network_version.split(".")
         return int(int(version_list[0]) * 1e8 + int(version_list[1]) * 1e4 + int(version_list[2]))
 
-    def _check_for_server_error(self, reply):
+    def _check_for_server_error(self, reply: str) -> None:
         """Checks for server error message in reply"""
         if re.search("Internal Server Error", reply) or re.search("500", reply):
             raise RPCErrorDoRetry("Internal Server Error")
@@ -181,7 +188,7 @@ class RPC(object):
         else:
             raise RPCError("Client returned invalid format. Expected JSON!")
 
-    def rpcexec(self, endpoint, payload):
+    def rpcexec(self, endpoint: str, payload: List[Dict[str, Any]]) -> Any:
         """
         Execute a call by sending the payload.
 
@@ -193,7 +200,7 @@ class RPC(object):
 
         reply = self.request_send(endpoint, json.dumps(payload, ensure_ascii=False).encode("utf8"))
 
-        ret = {}
+        ret: Union[Dict[str, Any], List[Any]] = {}
         try:
             ret = json.loads(reply, strict=False)
         except ValueError:
@@ -208,7 +215,7 @@ class RPC(object):
                 raise RPCError(ret["error"]["message"])
         else:
             if isinstance(ret, list):
-                ret_list = []
+                ret_list: List[Any] = []
                 for r in ret:
                     if isinstance(r, dict) and "error" in r:
                         if "detail" in r["error"]:
@@ -233,10 +240,10 @@ class RPC(object):
 
     # End of Deprecated methods
     ####################################################################
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         """Map all methods to RPC calls and pass through the arguments."""
 
-        def method(*args, **kwargs):
+        def method(*args: Any, **kwargs: Any) -> Any:
             endpoint = get_endpoint_name(*args, **kwargs)
             args = json.loads(json.dumps(args))
             # let's be able to define the num_retries per query

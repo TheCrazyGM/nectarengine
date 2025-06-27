@@ -1,14 +1,23 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from typing import Any, Dict, List, Optional
+
 import requests
 
 from .rpc import RPC
 
 
-class Api(object):
+class Api:
     """Access the hive-engine API"""
 
-    def __init__(self, url=None, rpcurl=None, user=None, password=None, **kwargs):
+    def __init__(
+        self,
+        url: Optional[str] = None,
+        rpcurl: Optional[str] = None,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
         if url is None:
             self.url = "https://enginerpc.com/"
         else:
@@ -24,7 +33,9 @@ class Api(object):
                 normalized_rpcurl = rpcurl + "/"
             self.rpc = RPC(url=normalized_rpcurl)
 
-    def get_history(self, account, symbol, limit=1000, offset=0):
+    def get_history(
+        self, account: str, symbol: str, limit: int = 1000, offset: int = 0
+    ) -> List[Dict[str, Any]]:
         """ "Get the transaction history for an account and a token"""
         response = requests.get(
             "https://accounts.hive-engine.com/accountHistory?account=%s&limit=%d&offset=%d&symbol=%s"
@@ -39,7 +50,7 @@ class Api(object):
             cnt2 += 1
         return response.json()
 
-    def get_latest_block_info(self):
+    def get_latest_block_info(self) -> Dict[str, Any]:
         """get the latest block of the sidechain"""
         ret = self.rpc.getLatestBlockInfo(endpoint="blockchain")
         if isinstance(ret, list) and len(ret) == 1:
@@ -47,7 +58,7 @@ class Api(object):
         else:
             return ret
 
-    def get_status(self):
+    def get_status(self) -> Dict[str, Any]:
         """gets the status of the sidechain"""
         ret = self.rpc.getStatus(endpoint="blockchain")
         if isinstance(ret, list) and len(ret) == 1:
@@ -55,7 +66,7 @@ class Api(object):
         else:
             return ret
 
-    def get_block_info(self, blocknumber):
+    def get_block_info(self, blocknumber: int) -> Dict[str, Any]:
         """get the block with the specified block number of the sidechain"""
         ret = self.rpc.getBlockInfo({"blockNumber": blocknumber}, endpoint="blockchain")
         if isinstance(ret, list) and len(ret) == 1:
@@ -63,7 +74,7 @@ class Api(object):
         else:
             return ret
 
-    def get_transaction_info(self, txid):
+    def get_transaction_info(self, txid: str) -> Dict[str, Any]:
         """Retrieve the specified transaction info of the sidechain"""
         ret = self.rpc.getTransactionInfo({"txid": txid}, endpoint="blockchain")
         if isinstance(ret, list) and len(ret) == 1:
@@ -71,7 +82,7 @@ class Api(object):
         else:
             return ret
 
-    def get_contract(self, contract_name):
+    def get_contract(self, contract_name: str) -> Optional[Dict[str, Any]]:
         """Get the contract specified from the database"""
         ret = self.rpc.getContract({"name": contract_name}, endpoint="contracts")
         if isinstance(ret, list) and len(ret) == 1:
@@ -79,7 +90,9 @@ class Api(object):
         else:
             return ret
 
-    def find_one(self, contract_name, table_name, query={}):
+    def find_one(
+        self, contract_name: str, table_name: str, query: Dict[str, Any] = {}
+    ) -> Optional[Dict[str, Any]]:
         """Get the object that matches the query from the table of the specified contract"""
         ret = self.rpc.findOne(
             {"contract": contract_name, "table": table_name, "query": query},
@@ -94,7 +107,15 @@ class Api(object):
         # Otherwise, it's not found or an unexpected format
         return None
 
-    def find(self, contract_name, table_name, query={}, limit=1000, offset=0, indexes=[]):
+    def find(
+        self,
+        contract_name: str,
+        table_name: str,
+        query: Dict[str, Any] = {},
+        limit: int = 1000,
+        offset: int = 0,
+        indexes: List[str] = [],
+    ) -> List[Dict[str, Any]]:
         """Get an array of objects that match the query from the table of the specified contract"""
         ret = self.rpc.find(
             {
@@ -112,13 +133,15 @@ class Api(object):
         else:
             return ret
 
-    def find_all(self, contract_name, table_name, query={}):
+    def find_all(
+        self, contract_name: str, table_name: str, query: Dict[str, Any] = {}
+    ) -> List[Dict[str, Any]]:
         """Get an array of objects that match the query from the table of the specified contract"""
         limit = 1000
         offset = 0
-        last_result = []
+        last_result: List[Dict[str, Any]] = []
         cnt = 0
-        result = []
+        result: List[Dict[str, Any]] = []
         while last_result is not None and len(last_result) == limit or cnt == 0:
             cnt += 1
             last_result = self.find(contract_name, table_name, query, limit=limit, offset=offset)
