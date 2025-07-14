@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- Added getBlockRangeInfo to Api class
+
 ## 0.1.0
 
 - Fully typed codebase
