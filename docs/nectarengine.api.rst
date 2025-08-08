@@ -1,7 +1,7 @@
-nectarengine\.api
-=================
+nectarengine.api module
+=======================
 
 .. automodule:: nectarengine.api
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :show-inheritance:
+   :undoc-members:

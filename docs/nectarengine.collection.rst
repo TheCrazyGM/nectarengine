@@ -1,7 +1,7 @@
-nectarengine\.collection
-========================
+nectarengine.collection module
+==============================
 
 .. automodule:: nectarengine.collection
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :show-inheritance:
+   :undoc-members:

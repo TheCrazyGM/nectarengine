@@ -1,7 +1,7 @@
-nectarengine\.tokenobject
-=========================
+nectarengine.tokenobject module
+===============================
 
 .. automodule:: nectarengine.tokenobject
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :show-inheritance:
+   :undoc-members:

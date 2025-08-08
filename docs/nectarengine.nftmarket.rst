@@ -1,7 +1,7 @@
-nectarengine\.nftmarket
-=======================
+nectarengine.nftmarket module
+=============================
 
 .. automodule:: nectarengine.nftmarket
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :show-inheritance:
+   :undoc-members:

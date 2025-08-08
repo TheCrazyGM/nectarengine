@@ -1,7 +1,7 @@
-nectarengine\.poolobject
-========================
+nectarengine.poolobject module
+==============================
 
 .. automodule:: nectarengine.poolobject
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :show-inheritance:
+   :undoc-members:

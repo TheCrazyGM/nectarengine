@@ -1,7 +1,7 @@
-nectarengine\.wallet
-====================
+nectarengine.wallet module
+==========================
 
 .. automodule:: nectarengine.wallet
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :show-inheritance:
+   :undoc-members:

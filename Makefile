@@ -55,7 +55,7 @@ test-dist: generate-versions
 	# uv publish --index testpypi
 
 docs:
-	# sphinx-apidoc -d 6 -e -f -o docs . *.py tests
+	sphinx-apidoc -d 6 -e -f -o docs src/nectarengine *.py tests
 	make -C docs clean html
 
 release: clean check dist git

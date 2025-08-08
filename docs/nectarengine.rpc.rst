@@ -1,7 +1,7 @@
-nectarengine\.rpc
-=================
+nectarengine.rpc module
+=======================
 
 .. automodule:: nectarengine.rpc
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :show-inheritance:
+   :undoc-members:

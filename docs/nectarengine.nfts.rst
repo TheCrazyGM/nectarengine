@@ -1,7 +1,7 @@
-nectarengine\.nfts
-==================
+nectarengine.nfts module
+========================
 
 .. automodule:: nectarengine.nfts
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :show-inheritance:
+   :undoc-members:

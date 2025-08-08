@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- Updated Docs for readthedocs release
+
 ## 0.1.1
 
 - Added getBlockRangeInfo to Api class

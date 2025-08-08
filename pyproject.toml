@@ -1,6 +1,6 @@
 [project]
 name = "nectarengine"
-version = "0.1.1"
+version = "0.1.2"
 description = "command line tool and python library for sending hive engine tokens"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -21,10 +21,7 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python",
 ]
-dependencies = [
-  "hive-nectar",
-  "requests",
-]
+dependencies = ["hive-nectar", "requests"]
 
 [project.urls]
 "Bug Tracker" = "https://github.com/thecrazygm/nectarengine/issues"
@@ -88,10 +85,4 @@ publish-url = "https://test.pypi.org/legacy/"
 explicit = true
 
 [dependency-groups]
-dev = [
-  "tomli",
-  "pytest",
-  "sphinx",
-  "sphinx-click",
-  "sphinx-rtd-theme",
-]
+dev = ["tomli", "pytest", "sphinx", "sphinx-click", "sphinx-rtd-theme"]

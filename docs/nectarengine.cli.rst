@@ -1,7 +1,7 @@
-nectarengine.nft module
+nectarengine.cli module
 =======================
 
-.. automodule:: nectarengine.nft
+.. automodule:: nectarengine.cli
    :members:
    :show-inheritance:
    :undoc-members:
