@@ -30,7 +30,9 @@ def _extract_primary_url(value: Optional[NodeInput]) -> Optional[str]:
         if isinstance(candidate, Node):
             urls.append(candidate.as_url())
         elif isinstance(candidate, str):
-            urls.append(candidate)
+            cleaned = candidate.strip()
+            if cleaned:
+                urls.append(cleaned)
         else:
             raise TypeError(f"Unsupported node input type: {type(candidate)!r}")
 
@@ -57,17 +59,20 @@ class Api:
         normalized_rpcurl = _extract_primary_url(rpcurl)
 
         if normalized_url is None:
-            self.url = "https://enginerpc.com/"
+            normalized_url = _ensure_trailing_slash("https://enginerpc.com/")
         else:
-            self.url = _ensure_trailing_slash(normalized_url)
+            normalized_url = _ensure_trailing_slash(normalized_url)
+        self.url = normalized_url
+
+        if normalized_rpcurl is not None:
+            normalized_rpcurl = _ensure_trailing_slash(normalized_rpcurl)
+
+        rpc_kwargs = {"user": user, "password": password, **kwargs}
 
         if provided_url and not provided_rpcurl:
-            self.rpc = RPC(url=self.url)
+            self.rpc = RPC(url=self.url, **rpc_kwargs)
         else:
-            rpc_target = normalized_rpcurl
-            if rpc_target is not None:
-                rpc_target = _ensure_trailing_slash(rpc_target)
-            self.rpc = RPC(url=rpc_target)
+            self.rpc = RPC(url=normalized_rpcurl, **rpc_kwargs)
 
     def get_history(
         self, account: str, symbol: str, limit: int = 1000, offset: int = 0
