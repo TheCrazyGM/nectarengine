@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3
+
+- Added `Nodes` utility to dynamically source Hive Engine nodes from account metadata and expose helper methods.
+- Updated `Api` initialization to accept node objects and sequences for seamless integration with node discovery.
+
 ## 0.1.2
 
 - Updated Docs for readthedocs release

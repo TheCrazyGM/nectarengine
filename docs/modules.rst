@@ -1,7 +1,7 @@
-nectarengine
-============
+src
+===
 
 .. toctree::
-   :maxdepth: 6
+   :maxdepth: 4
 
    nectarengine
