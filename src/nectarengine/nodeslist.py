@@ -135,7 +135,7 @@ class Nodes(Sequence[Node]):
             if not isinstance(entry, dict):
                 continue
             node_url = entry.get("node")
-            if not node_url:
+            if not node_url or not isinstance(node_url, str):
                 continue
             rank = _calculate_overall_rank(entry)
             nodes.append(
