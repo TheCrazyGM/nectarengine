@@ -1,10 +1,42 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Union, cast
 
 import requests
 
+from .nodeslist import Node, Nodes
 from .rpc import RPC
+
+NodeInput = Union[str, Node, Sequence[Union[str, Node]]]
+
+
+def _ensure_trailing_slash(url: str) -> str:
+    return url if url.endswith("/") else url + "/"
+
+
+def _extract_primary_url(value: Optional[NodeInput]) -> Optional[str]:
+    if value is None:
+        return None
+
+    def _iterable(input_value: NodeInput) -> Iterable[Union[str, Node]]:
+        if isinstance(input_value, (list, tuple)):
+            return cast(Sequence[Union[str, Node]], input_value)
+        if isinstance(input_value, Nodes):
+            return list(input_value)
+        return (input_value,)
+
+    urls: List[str] = []
+    for candidate in _iterable(value):
+        if isinstance(candidate, Node):
+            urls.append(candidate.as_url())
+        elif isinstance(candidate, str):
+            urls.append(candidate)
+        else:
+            raise TypeError(f"Unsupported node input type: {type(candidate)!r}")
+
+    if not urls:
+        return None
+    return urls[0]
 
 
 class Api:
@@ -12,26 +44,30 @@ class Api:
 
     def __init__(
         self,
-        url: Optional[str] = None,
-        rpcurl: Optional[str] = None,
+        url: Optional[NodeInput] = None,
+        rpcurl: Optional[NodeInput] = None,
         user: Optional[str] = None,
         password: Optional[str] = None,
         **kwargs: Any,
     ) -> None:
-        if url is None:
+        provided_url = url is not None
+        provided_rpcurl = rpcurl is not None
+
+        normalized_url = _extract_primary_url(url)
+        normalized_rpcurl = _extract_primary_url(rpcurl)
+
+        if normalized_url is None:
             self.url = "https://enginerpc.com/"
         else:
-            # Ensure URL has trailing slash
-            self.url = url if url.endswith("/") else url + "/"
-        if url is not None and rpcurl is None:
-            # Pass the normalized URL to RPC
+            self.url = _ensure_trailing_slash(normalized_url)
+
+        if provided_url and not provided_rpcurl:
             self.rpc = RPC(url=self.url)
         else:
-            # If rpcurl is provided, normalize it as well
-            normalized_rpcurl = rpcurl
-            if rpcurl is not None and not rpcurl.endswith("/"):
-                normalized_rpcurl = rpcurl + "/"
-            self.rpc = RPC(url=normalized_rpcurl)
+            rpc_target = normalized_rpcurl
+            if rpc_target is not None:
+                rpc_target = _ensure_trailing_slash(rpc_target)
+            self.rpc = RPC(url=rpc_target)
 
     def get_history(
         self, account: str, symbol: str, limit: int = 1000, offset: int = 0

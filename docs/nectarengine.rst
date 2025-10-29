@@ -5,7 +5,7 @@ Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 6
+   :maxdepth: 4
 
    nectarengine.api
    nectarengine.cli
@@ -15,6 +15,7 @@ Submodules
    nectarengine.nft
    nectarengine.nftmarket
    nectarengine.nfts
+   nectarengine.nodeslist
    nectarengine.pool
    nectarengine.poolobject
    nectarengine.rpc

@@ -12,14 +12,14 @@ def liquidity_pool():
 
 @pytest.fixture
 def test_pool(liquidity_pool):
-    return liquidity_pool.get_pool("SWAP.HIVE:INCOME")
+    return liquidity_pool.get_pool("ARCHON:SWAP.HIVE")
 
 
 def test_get_pool(liquidity_pool):
     # Test getting an existing pool
-    pool = liquidity_pool.get_pool("SWAP.HIVE:INCOME")
+    pool = liquidity_pool.get_pool("ARCHON:SWAP.HIVE")
     assert isinstance(pool, Pool)
-    assert pool["tokenPair"] == "SWAP.HIVE:INCOME"
+    assert pool["tokenPair"] == "ARCHON:SWAP.HIVE"
 
     # Test getting a non-existent pool
     with pytest.raises(PoolDoesNotExist):
