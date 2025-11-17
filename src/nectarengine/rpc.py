@@ -1,32 +1,12 @@
-"""graphennewsrpc."""
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import json
 import logging
 import re
-import sys
 from builtins import object, str
 from typing import Any, Dict, List, Optional, Union
 
+import requests
+
 from .version import version as nectarengine_version
-
-if sys.version_info[0] < 3:
-    pass
-else:
-    pass
-
-REQUEST_MODULE = None
-if not REQUEST_MODULE:
-    try:
-        import requests
-        from requests.adapters import HTTPAdapter
-        from requests.exceptions import ConnectionError
-        from requests.packages.urllib3.util.retry import Retry
-
-        REQUEST_MODULE = "requests"
-    except ImportError:
-        REQUEST_MODULE = None
 
 log = logging.getLogger(__name__)
 
@@ -62,8 +42,6 @@ def set_session_instance(instance: requests.Session) -> None:
 
 def shared_session_instance() -> requests.Session:
     """Get session instance"""
-    if REQUEST_MODULE is None:
-        raise Exception()
     if not SessionInstance.instance:
         SessionInstance.instance = requests.Session()
     return SessionInstance.instance

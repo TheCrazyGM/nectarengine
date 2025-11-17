@@ -1,4 +1,5 @@
 """Test configuration ensuring local sources are importable."""
+
 import sys
 from pathlib import Path
 

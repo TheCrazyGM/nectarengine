@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import unittest
 from unittest.mock import Mock, patch
 
@@ -48,7 +46,10 @@ class NodesListTests(unittest.TestCase):
 
     def test_nodes_refresh_and_sorting(self):
         metadata = sample_metadata()
-        with patch("nectarengine.nodeslist.Hive"), patch("nectarengine.nodeslist.Account") as account:
+        with (
+            patch("nectarengine.nodeslist.Hive"),
+            patch("nectarengine.nodeslist.Account") as account,
+        ):
             account.return_value.json_metadata = metadata
             nodes = Nodes(auto_refresh=False)
             nodes.refresh()
@@ -67,7 +68,10 @@ class NodesListTests(unittest.TestCase):
 
     def test_node_list_triggers_refresh_when_empty(self):
         metadata = sample_metadata()
-        with patch("nectarengine.nodeslist.Hive"), patch("nectarengine.nodeslist.Account") as account:
+        with (
+            patch("nectarengine.nodeslist.Hive"),
+            patch("nectarengine.nodeslist.Account") as account,
+        ):
             account.return_value.json_metadata = metadata
             nodes = Nodes(auto_refresh=False)
             urls = nodes.as_urls(limit=1)
@@ -78,7 +82,10 @@ class NodesListTests(unittest.TestCase):
 
     def test_fastest_and_primary_url_helpers(self):
         metadata = sample_metadata()
-        with patch("nectarengine.nodeslist.Hive"), patch("nectarengine.nodeslist.Account") as account:
+        with (
+            patch("nectarengine.nodeslist.Hive"),
+            patch("nectarengine.nodeslist.Account") as account,
+        ):
             account.return_value.json_metadata = metadata
             nodes = Nodes(auto_refresh=False)
             nodes.refresh()
@@ -93,7 +100,10 @@ class NodesListTests(unittest.TestCase):
 
     def test_raw_metadata_is_copied(self):
         metadata = sample_metadata()
-        with patch("nectarengine.nodeslist.Hive"), patch("nectarengine.nodeslist.Account") as account:
+        with (
+            patch("nectarengine.nodeslist.Hive"),
+            patch("nectarengine.nodeslist.Account") as account,
+        ):
             account.return_value.json_metadata = metadata
             nodes = Nodes(auto_refresh=False)
             nodes.refresh()

@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from typing import Any, Dict, List, Optional, Union
 
 from nectar.instance import shared_blockchain_instance

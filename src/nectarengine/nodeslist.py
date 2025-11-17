@@ -172,9 +172,7 @@ class Nodes(Sequence[Node]):
         nodes.sort()
         return nodes
 
-    def _fetch_beacon_nodes(
-        self, url: str, limit: Optional[int], timeout: int
-    ) -> List[Node]:
+    def _fetch_beacon_nodes(self, url: str, limit: Optional[int], timeout: int) -> List[Node]:
         try:
             response = requests.get(url, timeout=timeout)
             response.raise_for_status()
@@ -225,10 +223,7 @@ class Nodes(Sequence[Node]):
 def _calculate_overall_rank(node_data: Dict[str, Any]) -> float:
     """Replicate engine_bench ranking logic for consistent ordering."""
 
-    if (
-        not node_data.get("engine", False)
-        or node_data.get("SSCnodeVersion", "") == "unknown"
-    ):
+    if not node_data.get("engine", False) or node_data.get("SSCnodeVersion", "") == "unknown":
         return 999.0
 
     failed_ops = 0

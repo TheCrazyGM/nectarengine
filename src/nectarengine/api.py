@@ -102,7 +102,7 @@ class _RPCPool:
                 try:
                     rpc_method = getattr(self._rpc, method_name)
                     return rpc_method(*args, **kwargs)
-                except RPCError as exc:
+                except RPCError:
                     raise
                 except (RPCErrorDoRetry, requests.RequestException, ValueError) as exc:
                     last_exc = exc
