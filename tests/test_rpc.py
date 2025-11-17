@@ -1,17 +1,29 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import json
 import unittest
+from unittest.mock import Mock, patch
 
 from nectarengine.rpc import RPC
 
 
 class Testcases(unittest.TestCase):
-    def test_rpc_blockchain(self):
+    @patch("nectarengine.rpc.RPC.request_send")
+    def test_rpc_blockchain(self, mock_send):
+        mock_send.return_value = json.dumps({"result": {"blockNumber": 123}})
         rpc = RPC()
+        rpc.nodes = Mock()
+        rpc.nodes.reset_error_cnt_call = Mock()
         result = rpc.getLatestBlockInfo(endpoint="blockchain")
-        self.assertTrue(len(result) > 0)
+        self.assertEqual(result["blockNumber"], 123)
+        mock_send.assert_called_once()
 
-    def test_rpc_contract(self):
+    @patch("nectarengine.rpc.RPC.request_send")
+    def test_rpc_contract(self, mock_send):
+        mock_send.return_value = json.dumps({"result": {"name": "token"}})
         rpc = RPC()
+        rpc.nodes = Mock()
+        rpc.nodes.reset_error_cnt_call = Mock()
         result = rpc.getContract({"name": "token"}, endpoint="contracts")
-        self.assertTrue(len(result) > 0)
+        self.assertEqual(result["name"], "token")
+        mock_send.assert_called_once()

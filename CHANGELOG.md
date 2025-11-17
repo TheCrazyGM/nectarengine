@@ -1,5 +1,8 @@
 # Changelog
+## 0.1.4
 
+- Added RPC Pool to ease use of multiple nodes, with automatic rotation and fallback. Uses peakd beacon, and flowerengine metadata to find nodes.
+- Added Peakd Beacon lookup for Hive-Engnine History nodes.
 ## 0.1.3
 
 - Added `Nodes` utility to dynamically source Hive Engine nodes from account metadata and expose helper methods.

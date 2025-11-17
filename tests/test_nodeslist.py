@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from nectarengine.api import Api
 from nectarengine.nodeslist import Node, Nodes
@@ -112,15 +112,52 @@ class NodesListTests(unittest.TestCase):
         with patch("nectarengine.api.RPC") as rpc:
             api_from_nodes = Api(url=nodes)
             self.assertEqual(api_from_nodes.url, "https://primary.example/")
-            rpc.assert_called_once_with(url="https://primary.example/")
+            rpc.assert_called_once_with(url="https://primary.example/", user=None, password=None)
 
             rpc.reset_mock()
             Api(url=nodes.fastest(2))
-            rpc.assert_called_once_with(url="https://primary.example/")
+            rpc.assert_called_once_with(url="https://primary.example/", user=None, password=None)
 
             rpc.reset_mock()
             Api(url=[nodes.node_list()[1]])
-            rpc.assert_called_once_with(url="https://secondary.example/")
+            rpc.assert_called_once_with(url="https://secondary.example/", user=None, password=None)
+
+    @patch("nectarengine.nodeslist.requests.get")
+    def test_beacon_fetches_and_sorts_nodes(self, mock_get: Mock):
+        mock_response = Mock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = [
+            {"endpoint": "https://node-a", "score": 100, "fail": 0},
+            {"endpoint": "https://node-b", "score": 80, "fail": 2},
+        ]
+        mock_get.return_value = mock_response
+
+        nodes = Nodes(auto_refresh=False)
+        beacon_nodes = nodes.beacon()
+
+        self.assertEqual(
+            [node.as_url() for node in beacon_nodes],
+            ["https://node-a/", "https://node-b/"],
+        )
+        self.assertEqual(beacon_nodes[1].failing_cause, "2 failed health checks")
+
+        limited_nodes = nodes.beacon(limit=1)
+        self.assertEqual(len(limited_nodes), 1)
+        self.assertEqual(limited_nodes[0].as_url(), "https://node-a/")
+
+    @patch("nectarengine.nodeslist.requests.get")
+    def test_beacon_history_fetches_nodes(self, mock_get: Mock):
+        mock_response = Mock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = [
+            {"endpoint": "https://history-a", "score": 95, "fail": 0},
+        ]
+        mock_get.return_value = mock_response
+
+        nodes = Nodes(auto_refresh=False)
+        history_nodes = nodes.beacon_history()
+
+        self.assertEqual([node.as_url() for node in history_nodes], ["https://history-a/"])
 
 
 if __name__ == "__main__":

@@ -1,44 +1,146 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
+import logging
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Union, cast
 
 import requests
 
 from .nodeslist import Node, Nodes
-from .rpc import RPC
+from .rpc import RPC, RPCError, RPCErrorDoRetry
 
-NodeInput = Union[str, Node, Sequence[Union[str, Node]]]
+NodeInput = Union[
+    str,
+    Node,
+    Dict[str, Any],
+    Sequence[Union[str, Node, Dict[str, Any]]],
+    Nodes,
+]
+log = logging.getLogger(__name__)
+
+_DEFAULT_RPC_URL = "https://enginerpc.com/"
+_DEFAULT_HISTORY_URL = "https://accounts.hive-engine.com/"
 
 
 def _ensure_trailing_slash(url: str) -> str:
     return url if url.endswith("/") else url + "/"
 
 
-def _extract_primary_url(value: Optional[NodeInput]) -> Optional[str]:
-    if value is None:
-        return None
+def _iterable_node_inputs(value: NodeInput) -> Iterable[Union[str, Node, Dict[str, Any]]]:
+    if isinstance(value, (list, tuple)):
+        return cast(Sequence[Union[str, Node, Dict[str, Any]]], value)
+    if isinstance(value, Nodes):
+        return list(value)
+    return (value,)
 
-    def _iterable(input_value: NodeInput) -> Iterable[Union[str, Node]]:
-        if isinstance(input_value, (list, tuple)):
-            return cast(Sequence[Union[str, Node]], input_value)
-        if isinstance(input_value, Nodes):
-            return list(input_value)
-        return (input_value,)
+
+def _normalize_node_inputs(value: Optional[NodeInput]) -> List[str]:
+    if value is None:
+        return []
 
     urls: List[str] = []
-    for candidate in _iterable(value):
+    for candidate in _iterable_node_inputs(value):
         if isinstance(candidate, Node):
             urls.append(candidate.as_url())
         elif isinstance(candidate, str):
             cleaned = candidate.strip()
             if cleaned:
                 urls.append(cleaned)
+        elif isinstance(candidate, dict):
+            endpoint = candidate.get("endpoint") or candidate.get("url")
+            if isinstance(endpoint, str) and endpoint.strip():
+                urls.append(endpoint.strip())
         else:
             raise TypeError(f"Unsupported node input type: {type(candidate)!r}")
 
-    if not urls:
-        return None
-    return urls[0]
+    return urls
+
+
+def _normalize_single_url(value: Optional[NodeInput]) -> Optional[str]:
+    urls = _normalize_node_inputs(value)
+    if urls:
+        return urls[0]
+    return None
+
+
+def _deduplicate_preserve_order(urls: Iterable[str]) -> List[str]:
+    seen: set[str] = set()
+    ordered: List[str] = []
+    for url in urls:
+        normalized = _ensure_trailing_slash(url.strip())
+        if normalized not in seen:
+            seen.add(normalized)
+            ordered.append(normalized)
+    return ordered
+
+
+class _RPCPool:
+    def __init__(
+        self,
+        endpoints: Sequence[str],
+        rpc_kwargs: Dict[str, Any],
+        per_endpoint_attempts: int = 2,
+    ) -> None:
+        if not endpoints:
+            raise ValueError("At least one RPC endpoint must be provided")
+        if per_endpoint_attempts < 1:
+            raise ValueError("per_endpoint_attempts must be >= 1")
+        self._endpoints = list(endpoints)
+        self._rpc_kwargs = rpc_kwargs
+        self._current_index = 0
+        self._per_endpoint_attempts = per_endpoint_attempts
+        self._rpc = self._build_rpc(self._endpoints[self._current_index])
+
+    def _build_rpc(self, url: str) -> RPC:
+        return RPC(url=url, **self._rpc_kwargs)
+
+    def _rotate(self) -> None:
+        self._current_index = (self._current_index + 1) % len(self._endpoints)
+        self._rpc = self._build_rpc(self._endpoints[self._current_index])
+
+    def _execute(self, method_name: str, *args: Any, **kwargs: Any) -> Any:
+        last_exc: Optional[Exception] = None
+        for endpoint_index in range(len(self._endpoints)):
+            for attempt in range(1, self._per_endpoint_attempts + 1):
+                try:
+                    rpc_method = getattr(self._rpc, method_name)
+                    return rpc_method(*args, **kwargs)
+                except RPCError as exc:
+                    raise
+                except (RPCErrorDoRetry, requests.RequestException, ValueError) as exc:
+                    last_exc = exc
+                    log.warning(
+                        "RPC endpoint %s failed (attempt %s/%s on node %s/%s): %s",
+                        self._endpoints[self._current_index],
+                        attempt,
+                        self._per_endpoint_attempts,
+                        endpoint_index + 1,
+                        len(self._endpoints),
+                        exc,
+                    )
+                    if attempt < self._per_endpoint_attempts:
+                        continue
+                    self._rotate()
+                    break
+                except Exception as exc:  # pragma: no cover - unexpected error class
+                    last_exc = exc
+                    log.warning(
+                        "Unexpected RPC failure on %s: %s",
+                        self._endpoints[self._current_index],
+                        exc,
+                    )
+                    if attempt < self._per_endpoint_attempts:
+                        continue
+                    self._rotate()
+                    break
+
+        raise RuntimeError(
+            "All configured Hive Engine nodes are temporarily unavailable right now. "
+            "Please try again shortly or provide a custom endpoint."
+        ) from last_exc
+
+    def __getattr__(self, name: str) -> Any:
+        def caller(*args: Any, **kwargs: Any) -> Any:
+            return self._execute(name, *args, **kwargs)
+
+        return caller
 
 
 class Api:
@@ -48,46 +150,86 @@ class Api:
         self,
         url: Optional[NodeInput] = None,
         rpcurl: Optional[NodeInput] = None,
+        history_url: Optional[NodeInput] = None,
         user: Optional[str] = None,
         password: Optional[str] = None,
         **kwargs: Any,
     ) -> None:
-        provided_url = url is not None
-        provided_rpcurl = rpcurl is not None
-
-        normalized_url = _extract_primary_url(url)
-        normalized_rpcurl = _extract_primary_url(rpcurl)
-
-        if normalized_url is None:
-            normalized_url = _ensure_trailing_slash("https://enginerpc.com/")
-        else:
-            normalized_url = _ensure_trailing_slash(normalized_url)
-        self.url = normalized_url
-
-        if normalized_rpcurl is not None:
-            normalized_rpcurl = _ensure_trailing_slash(normalized_rpcurl)
+        rpc_endpoint_attempts = kwargs.pop("rpc_endpoint_attempts", 2)
 
         rpc_kwargs = {"user": user, "password": password, **kwargs}
 
-        if provided_url and not provided_rpcurl:
-            self.rpc = RPC(url=self.url, **rpc_kwargs)
-        else:
-            self.rpc = RPC(url=normalized_rpcurl, **rpc_kwargs)
+        user_rpc_candidates = _normalize_node_inputs(rpcurl)
+        user_url_candidates = _normalize_node_inputs(url)
+
+        endpoint_candidates: List[str] = []
+        endpoint_candidates.extend(user_rpc_candidates)
+        endpoint_candidates.extend(user_url_candidates)
+
+        nodes_helper: Optional[Nodes] = None
+
+        if not endpoint_candidates:
+            nodes_helper = Nodes(auto_refresh=False)
+            try:
+                beacon_nodes = nodes_helper.beacon()
+                endpoint_candidates.extend(node.as_url() for node in beacon_nodes)
+            except RuntimeError as exc:
+                log.warning("Failed to fetch beacon nodes: %s", exc)
+
+        if not endpoint_candidates:
+            if nodes_helper is None:
+                nodes_helper = Nodes(auto_refresh=False)
+            try:
+                endpoint_candidates.extend(nodes_helper.as_urls())
+            except Exception as exc:  # pragma: no cover - network/chain failures
+                log.warning("Unable to load FlowerEngine metadata nodes: %s", exc)
+
+        if not endpoint_candidates:
+            endpoint_candidates.append(_DEFAULT_RPC_URL)
+
+        endpoints = _deduplicate_preserve_order(endpoint_candidates)
+
+        rest_base = _normalize_single_url(url)
+        if rest_base is None:
+            rest_base = endpoints[0]
+        self.url = _ensure_trailing_slash(rest_base)
+
+        self.rpc = _RPCPool(
+            endpoints=endpoints,
+            rpc_kwargs=rpc_kwargs,
+            per_endpoint_attempts=rpc_endpoint_attempts,
+        )
+
+        history_candidates = _normalize_node_inputs(history_url)
+        if not history_candidates:
+            try:
+                history_nodes = Nodes(auto_refresh=False).beacon_history()
+                history_candidates.extend(node.as_url() for node in history_nodes)
+            except RuntimeError as exc:
+                log.warning("Failed to fetch beacon history nodes: %s", exc)
+
+        if not history_candidates:
+            history_candidates.append(_DEFAULT_HISTORY_URL)
+
+        self._history_endpoints = _deduplicate_preserve_order(history_candidates)
+        self.history_url = self._history_endpoints[0]
+        self._history_retry_limit = 10
 
     def get_history(
         self, account: str, symbol: str, limit: int = 1000, offset: int = 0
     ) -> List[Dict[str, Any]]:
         """ "Get the transaction history for an account and a token"""
-        response = requests.get(
-            "https://accounts.hive-engine.com/accountHistory?account=%s&limit=%d&offset=%d&symbol=%s"
-            % (account, limit, offset, symbol)
-        )
+        params = {
+            "account": account,
+            "limit": limit,
+            "offset": offset,
+            "symbol": symbol,
+        }
+        history_endpoint = f"{self.history_url}accountHistory"
+        response = requests.get(history_endpoint, params=params)
         cnt2 = 0
-        while response.status_code != 200 and cnt2 < 10:
-            response = requests.get(
-                "https://accounts.hive-engine.com/accountHistory?account=%s&limit=%d&offset=%d&symbol=%s"
-                % (account, limit, offset, symbol)
-            )
+        while response.status_code != 200 and cnt2 < self._history_retry_limit:
+            response = requests.get(history_endpoint, params=params)
             cnt2 += 1
         return response.json()
 

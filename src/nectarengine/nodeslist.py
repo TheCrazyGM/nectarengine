@@ -4,11 +4,14 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence
 
+import requests
 from nectar import Hive
 from nectar.account import Account
 
 _DEFAULT_ACCOUNT = "flowerengine"
 _DEFAULT_HIVE_NODES: Sequence[str] = ("https://api.hive.blog",)
+_BEACON_HE_NODES_URL = "https://beacon.peakd.com/api/he/nodes"
+_BEACON_HE_HISTORY_NODES_URL = "https://beacon.peakd.com/api/heh/nodes"
 
 NodeUrlList = List[str]
 
@@ -65,6 +68,26 @@ class Nodes(Sequence[Node]):
         self._nodes = self._build_nodes(metadata)
         self._raw_metadata = metadata
         return list(self._nodes)
+
+    def beacon(
+        self,
+        limit: Optional[int] = None,
+        url: str = _BEACON_HE_NODES_URL,
+        timeout: int = 15,
+    ) -> List[Node]:
+        """Fetch Hive Engine nodes from the PeakD Beacon API."""
+
+        return self._fetch_beacon_nodes(url=url, limit=limit, timeout=timeout)
+
+    def beacon_history(
+        self,
+        limit: Optional[int] = None,
+        url: str = _BEACON_HE_HISTORY_NODES_URL,
+        timeout: int = 15,
+    ) -> List[Node]:
+        """Fetch Hive Engine history nodes from the PeakD Beacon API."""
+
+        return self._fetch_beacon_nodes(url=url, limit=limit, timeout=timeout)
 
     def node_list(self) -> List[Node]:
         """Return the currently cached node list, refreshing if empty."""
@@ -148,6 +171,55 @@ class Nodes(Sequence[Node]):
             )
         nodes.sort()
         return nodes
+
+    def _fetch_beacon_nodes(
+        self, url: str, limit: Optional[int], timeout: int
+    ) -> List[Node]:
+        try:
+            response = requests.get(url, timeout=timeout)
+            response.raise_for_status()
+            payload = response.json()
+        except requests.RequestException as exc:
+            raise RuntimeError(f"Unable to reach beacon service: {exc}") from exc
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("Beacon API returned invalid JSON payload") from exc
+
+        if not isinstance(payload, list):
+            raise RuntimeError("Beacon API returned unexpected structure; expected list")
+
+        beacon_nodes: List[Node] = []
+        for entry in payload:
+            if not isinstance(entry, dict):
+                continue
+            endpoint = entry.get("endpoint")
+            if not isinstance(endpoint, str) or not endpoint.strip():
+                continue
+
+            score = entry.get("score")
+            rank = 100.0
+            if isinstance(score, (int, float)):
+                rank = max(0.0, 100.0 - float(score))
+
+            fail_count = entry.get("fail")
+            failing_cause = None
+            if isinstance(fail_count, (int, float)) and fail_count > 0:
+                failing_cause = f"{int(fail_count)} failed health checks"
+
+            beacon_nodes.append(
+                Node(
+                    rank=rank,
+                    url=endpoint,
+                    data=entry,
+                    failing_cause=failing_cause,
+                )
+            )
+
+        beacon_nodes.sort()
+        if limit is not None:
+            if limit <= 0:
+                return []
+            return beacon_nodes[:limit]
+        return beacon_nodes
 
 
 def _calculate_overall_rank(node_data: Dict[str, Any]) -> float:
