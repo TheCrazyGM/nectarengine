@@ -5,6 +5,7 @@
 - Fixed type hinting errors in `cli.py`, `nfts.py`, and `tokenobject.py`.
 - Added defensive `None` checks for `nft.get_id()` calls in CLI to prevent runtime errors.
 - Resolved `sys._MEIPASS` attribute error for frozen applications.
+- Refactored `nodeslist.py` to exclusively use PeakD Beacon API, removing legacy `flowerengine` logic.
 - Cleaned up unused variables and imports identified by `ruff`.
 
 ## 0.2.0

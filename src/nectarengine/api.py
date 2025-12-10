@@ -177,14 +177,6 @@ class Api:
                 log.warning("Failed to fetch beacon nodes: %s", exc)
 
         if not endpoint_candidates:
-            if nodes_helper is None:
-                nodes_helper = Nodes(auto_refresh=False)
-            try:
-                endpoint_candidates.extend(nodes_helper.as_urls())
-            except Exception as exc:  # pragma: no cover - network/chain failures
-                log.warning("Unable to load FlowerEngine metadata nodes: %s", exc)
-
-        if not endpoint_candidates:
             endpoint_candidates.append(_DEFAULT_RPC_URL)
 
         endpoints = _deduplicate_preserve_order(endpoint_candidates)
