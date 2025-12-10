@@ -1,6 +1,6 @@
 [project]
 name = "nectarengine"
-version = "0.1.4"
+version = "0.2.1"
 description = "command line tool and python library for sending hive engine tokens"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -21,7 +21,11 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python",
 ]
-dependencies = ["hive-nectar", "requests"]
+dependencies = [
+    "click-shell>=2.1",
+    "hive-nectar",
+    "httpx",
+]
 
 [project.urls]
 "Bug Tracker" = "https://github.com/thecrazygm/nectarengine/issues"

@@ -2,9 +2,9 @@
 
 import json
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Union, overload
 
-import requests
+import httpx
 from nectar import Hive
 from nectar.account import Account
 
@@ -127,7 +127,13 @@ class Nodes(Sequence[Node]):
     def __len__(self) -> int:
         return len(self.node_list())
 
-    def __getitem__(self, index: int) -> Node:
+    @overload
+    def __getitem__(self, index: int) -> Node: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[Node]: ...
+
+    def __getitem__(self, index: Union[int, slice]) -> Union[Node, Sequence[Node]]:
         return self.node_list()[index]
 
     def __iter__(self) -> Iterator[Node]:
@@ -174,10 +180,10 @@ class Nodes(Sequence[Node]):
 
     def _fetch_beacon_nodes(self, url: str, limit: Optional[int], timeout: int) -> List[Node]:
         try:
-            response = requests.get(url, timeout=timeout)
+            response = httpx.get(url, timeout=timeout)
             response.raise_for_status()
             payload = response.json()
-        except requests.RequestException as exc:
+        except httpx.HTTPError as exc:
             raise RuntimeError(f"Unable to reach beacon service: {exc}") from exc
         except json.JSONDecodeError as exc:
             raise RuntimeError("Beacon API returned invalid JSON payload") from exc

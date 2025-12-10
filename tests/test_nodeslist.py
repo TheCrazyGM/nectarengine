@@ -132,7 +132,7 @@ class NodesListTests(unittest.TestCase):
             Api(url=[nodes.node_list()[1]])
             rpc.assert_called_once_with(url="https://secondary.example/", user=None, password=None)
 
-    @patch("nectarengine.nodeslist.requests.get")
+    @patch("nectarengine.nodeslist.httpx.get")
     def test_beacon_fetches_and_sorts_nodes(self, mock_get: Mock):
         mock_response = Mock()
         mock_response.raise_for_status.return_value = None
@@ -155,7 +155,7 @@ class NodesListTests(unittest.TestCase):
         self.assertEqual(len(limited_nodes), 1)
         self.assertEqual(limited_nodes[0].as_url(), "https://node-a/")
 
-    @patch("nectarengine.nodeslist.requests.get")
+    @patch("nectarengine.nodeslist.httpx.get")
     def test_beacon_history_fetches_nodes(self, mock_get: Mock):
         mock_response = Mock()
         mock_response.raise_for_status.return_value = None

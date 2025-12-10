@@ -7,6 +7,7 @@ General
    :maxdepth: 1
 
    installation
+   changelog
    quickstart
    cli
    tutorials

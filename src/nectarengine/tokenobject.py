@@ -31,9 +31,9 @@ class Token(dict):
 
     def quantize(self, amount: Union[float, int, str]) -> decimal.Decimal:
         """Round down a amount using the token precision and returns a Decimal object"""
-        amount = decimal.Decimal(amount)
+        decimal_amount = decimal.Decimal(amount)
         places = decimal.Decimal(10) ** (-self["precision"])
-        return amount.quantize(places, rounding=decimal.ROUND_DOWN)
+        return decimal_amount.quantize(places, rounding=decimal.ROUND_DOWN)
 
     def get_info(self) -> Optional[Dict[str, Any]]:
         """Returns information about the token"""

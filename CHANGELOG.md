@@ -1,8 +1,23 @@
 # Changelog
+
+## 0.2.1
+
+- Fixed type hinting errors in `cli.py`, `nfts.py`, and `tokenobject.py`.
+- Added defensive `None` checks for `nft.get_id()` calls in CLI to prevent runtime errors.
+- Resolved `sys._MEIPASS` attribute error for frozen applications.
+- Cleaned up unused variables and imports identified by `ruff`.
+
+## 0.2.0
+
+- Migrated network layer from `requests` to `httpx` for better performance and modern standards.
+- Enhanced `find_all` pagination to use `last_id` based recursion, improving reliability for large datasets.
+- Silenced noisy `httpx` logs by default.
+
 ## 0.1.4
 
 - Added RPC Pool to ease use of multiple nodes, with automatic rotation and fallback. Uses peakd beacon, and flowerengine metadata to find nodes.
 - Added Peakd Beacon lookup for Hive-Engnine History nodes.
+
 ## 0.1.3
 
 - Added `Nodes` utility to dynamically source Hive Engine nodes from account metadata and expose helper methods.

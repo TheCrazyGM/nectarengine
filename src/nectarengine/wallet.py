@@ -101,7 +101,7 @@ class Wallet(list):
             raise InvalidTokenAmount(
                 "Amount to transfer is below token precision of %d" % token["precision"]
             )
-        check_to = Account(to, blockchain_instance=self.blockchain)
+        Account(to, blockchain_instance=self.blockchain)
         contract_payload = {
             "symbol": symbol.upper(),
             "to": to,
@@ -261,7 +261,7 @@ class Wallet(list):
             raise InvalidTokenAmount(
                 "Amount to issue is below token precision of %d" % token["precision"]
             )
-        check_to = Account(to, blockchain_instance=self.blockchain)
+        Account(to, blockchain_instance=self.blockchain)
         contract_payload = {"symbol": symbol.upper(), "to": to, "quantity": str(quant_amount)}
         json_data = {
             "contractName": "tokens",

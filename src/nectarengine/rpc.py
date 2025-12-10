@@ -4,7 +4,7 @@ import re
 from builtins import object, str
 from typing import Any, Dict, List, Optional, Union
 
-import requests
+import httpx
 
 from .version import version as nectarengine_version
 
@@ -32,18 +32,18 @@ class UnauthorizedError(Exception):
 class SessionInstance(object):
     """Singelton for the Session Instance"""
 
-    instance: Optional[requests.Session] = None
+    instance: Optional[httpx.Client] = None
 
 
-def set_session_instance(instance: requests.Session) -> None:
+def set_session_instance(instance: httpx.Client) -> None:
     """Set session instance"""
     SessionInstance.instance = instance
 
 
-def shared_session_instance() -> requests.Session:
+def shared_session_instance() -> httpx.Client:
     """Get session instance"""
     if not SessionInstance.instance:
-        SessionInstance.instance = requests.Session()
+        SessionInstance.instance = httpx.Client()
     return SessionInstance.instance
 
 
@@ -81,9 +81,6 @@ class RPC(object):
         """Init."""
         self._request_id = 0
         self.timeout = kwargs.get("timeout", 60)
-        num_retries = kwargs.get("num_retries", -1)
-        num_retries_call = kwargs.get("num_retries_call", 5)
-
         self.user = user
         self.password = password
         if url is None:
@@ -107,7 +104,7 @@ class RPC(object):
         if self.user is not None and self.password is not None:
             response = self.session.post(
                 self.url + endpoint,
-                data=payload,
+                content=payload,
                 headers=self.headers,
                 timeout=self.timeout,
                 auth=(self.user, self.password),
@@ -115,7 +112,7 @@ class RPC(object):
         else:
             response = self.session.post(
                 self.url + endpoint,
-                data=payload,
+                content=payload,
                 headers=self.headers,
                 timeout=self.timeout,
             )

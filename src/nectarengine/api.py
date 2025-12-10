@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Union, cast
 
-import requests
+import httpx
 
 from .nodeslist import Node, Nodes
 from .rpc import RPC, RPCError, RPCErrorDoRetry
@@ -23,12 +23,12 @@ def _ensure_trailing_slash(url: str) -> str:
     return url if url.endswith("/") else url + "/"
 
 
-def _iterable_node_inputs(value: NodeInput) -> Iterable[Union[str, Node, Dict[str, Any]]]:
+def _iterable_node_inputs(value: NodeInput) -> Sequence[Union[str, Node, Dict[str, Any]]]:
     if isinstance(value, (list, tuple)):
         return cast(Sequence[Union[str, Node, Dict[str, Any]]], value)
     if isinstance(value, Nodes):
         return list(value)
-    return (value,)
+    return cast(Sequence[Union[str, Node, Dict[str, Any]]], [value])
 
 
 def _normalize_node_inputs(value: Optional[NodeInput]) -> List[str]:
@@ -104,7 +104,7 @@ class _RPCPool:
                     return rpc_method(*args, **kwargs)
                 except RPCError:
                     raise
-                except (RPCErrorDoRetry, requests.RequestException, ValueError) as exc:
+                except (RPCErrorDoRetry, httpx.HTTPError, ValueError) as exc:
                     last_exc = exc
                     log.warning(
                         "RPC endpoint %s failed (attempt %s/%s on node %s/%s): %s",
@@ -226,10 +226,10 @@ class Api:
             "symbol": symbol,
         }
         history_endpoint = f"{self.history_url}accountHistory"
-        response = requests.get(history_endpoint, params=params)
+        response = httpx.get(history_endpoint, params=params)
         cnt2 = 0
         while response.status_code != 200 and cnt2 < self._history_retry_limit:
-            response = requests.get(history_endpoint, params=params)
+            response = httpx.get(history_endpoint, params=params)
             cnt2 += 1
         return response.json()
 
@@ -351,13 +351,31 @@ class Api:
         """Get an array of objects that match the query from the table of the specified contract"""
         limit = 1000
         offset = 0
-        last_result: List[Dict[str, Any]] = []
-        cnt = 0
         result: List[Dict[str, Any]] = []
-        while last_result is not None and len(last_result) == limit or cnt == 0:
-            cnt += 1
-            last_result = self.find(contract_name, table_name, query, limit=limit, offset=offset)
-            if last_result is not None:
-                result += last_result
+
+        # Initial fetch
+        batch = self.find(contract_name, table_name, query, limit=limit, offset=0)
+        if not batch:
+            return []
+
+        result.extend(batch)
+
+        while len(batch) == limit:
+            # Prepare next query with last_id
+            last_id = batch[-1].get("_id")
+            if not last_id:
+                # Fallback to offset if no _id found (shouldn't happen on standard tables)
                 offset += limit
+                batch = self.find(contract_name, table_name, query, limit=limit, offset=offset)
+            else:
+                # Merge _id filter into query
+                next_query = query.copy()
+                next_query["_id"] = {"$gt": last_id}
+                batch = self.find(contract_name, table_name, next_query, limit=limit, offset=0)
+
+            if batch:
+                result.extend(batch)
+            else:
+                break
+
         return result

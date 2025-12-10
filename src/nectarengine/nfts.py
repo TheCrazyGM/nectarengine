@@ -22,7 +22,7 @@ class Nfts(list):
         tokens = self.api.find_all("nft", "nfts", query={})
         return tokens
 
-    def get_nft_params(self) -> Dict[str, Any]:
+    def get_nft_params(self) -> Optional[Dict[str, Any]]:
         """Returns all available nft as list"""
         tokens = self.api.find_one("nft", "params", query={})
         if isinstance(tokens, list) and len(tokens) > 0:
