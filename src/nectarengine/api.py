@@ -371,3 +371,39 @@ class Api:
                 break
 
         return result
+
+    def find_many(
+        self,
+        contract_name: str,
+        table_name: str,
+        query: Dict[str, Any] = {},
+        limit: int = 1000,
+        offset: int = 0,
+        last_id: Optional[str] = None,
+        indexes: List[str] = [],
+    ) -> List[Dict[str, Any]]:
+        """
+        Get an array of objects that match the query, supporting last_id for efficient pagination.
+        This mirrors the 'findMany' functionality in hiveenginepy.
+        """
+        query_copy = query.copy()
+        if last_id:
+            if "_id" in query_copy and isinstance(query_copy["_id"], dict):
+                query_copy["_id"]["$gt"] = last_id
+            elif "_id" in query_copy:
+                # _id is already present but not a dict condition, complex case.
+                # Assuming simple equality was intended, override with range check?
+                # For safety, let's just make it a $gt check if possible or fail if conflict.
+                # Standard practice matches hiveenginepy: force the $gt check logic.
+                query_copy["_id"] = {"$gt": last_id}
+            else:
+                query_copy["_id"] = {"$gt": last_id}
+
+        return self.find(
+            contract_name,
+            table_name,
+            query=query_copy,
+            limit=limit,
+            offset=offset,
+            indexes=indexes,
+        )
