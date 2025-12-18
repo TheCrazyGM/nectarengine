@@ -21,6 +21,7 @@ Submodules
    nectarengine.rpc
    nectarengine.tokenobject
    nectarengine.tokens
+   nectarengine.utils
    nectarengine.version
    nectarengine.wallet
 

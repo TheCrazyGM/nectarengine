@@ -9,6 +9,12 @@ Changelog
 -  Added defensive ``None`` checks for ``nft.get_id()`` calls in CLI to
    prevent runtime errors.
 -  Resolved ``sys._MEIPASS`` attribute error for frozen applications.
+-  Refactored ``nodeslist.py`` to exclusively use PeakD Beacon API,
+   removing legacy ``flowerengine`` logic.
+-  Added ``find_many`` to ``Api`` for efficient pagination with
+   ``last_id``.
+-  Added ``utils.py`` with ``Query`` and ``Cond`` helpers for
+   constructing queries.
 -  Cleaned up unused variables and imports identified by ``ruff``.
 
 .. _section-1:
@@ -30,7 +36,7 @@ Changelog
 -  Added RPC Pool to ease use of multiple nodes, with automatic rotation
    and fallback. Uses peakd beacon, and flowerengine metadata to find
    nodes.
--  Added Peakd Beacon lookup for Hive-Engnine History nodes.
+-  Added Peakd Beacon lookup for Hive-Engine History nodes.
 
 .. _section-3:
 
@@ -111,7 +117,7 @@ Changelog
 0.0.3
 -----
 
--  Update api test to make ues of only current blocks because of
+-  Update api test to make use of only current blocks because of
    litenodes block limits.
 -  Updated documentation to compile with sphinx correctly.
 

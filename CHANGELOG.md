@@ -19,7 +19,7 @@
 ## 0.1.4
 
 - Added RPC Pool to ease use of multiple nodes, with automatic rotation and fallback. Uses peakd beacon, and flowerengine metadata to find nodes.
-- Added Peakd Beacon lookup for Hive-Engnine History nodes.
+- Added Peakd Beacon lookup for Hive-Engine History nodes.
 
 ## 0.1.3
 
@@ -64,7 +64,7 @@
 
 ## 0.0.3
 
-- Update api test to make ues of only current blocks because of litenodes block limits.
+- Update api test to make use of only current blocks because of litenodes block limits.
 - Updated documentation to compile with sphinx correctly.
 
 ## 0.0.2
