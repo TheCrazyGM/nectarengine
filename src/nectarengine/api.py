@@ -376,16 +376,20 @@ class Api:
         self,
         contract_name: str,
         table_name: str,
-        query: Dict[str, Any] = {},
+        query: Optional[Dict[str, Any]] = None,
         limit: int = 1000,
         offset: int = 0,
         last_id: Optional[str] = None,
-        indexes: List[str] = [],
+        indexes: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Get an array of objects that match the query, supporting last_id for efficient pagination.
         This mirrors the 'findMany' functionality in hiveenginepy.
         """
+        if query is None:
+            query = {}
+        if indexes is None:
+            indexes = []
         query_copy = query.copy()
         if last_id:
             if "_id" in query_copy and isinstance(query_copy["_id"], dict):
