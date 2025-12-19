@@ -6,6 +6,7 @@ import sys
 import time
 from builtins import int, str
 from datetime import datetime
+from typing import Any, List
 
 import click
 from click_shell import shell
@@ -29,7 +30,7 @@ from nectarengine.wallet import Wallet
 click.disable_unicode_literals_warning = True
 log = logging.getLogger(__name__)
 try:
-    import keyring
+    import keyring  # type: ignore[import]
 
     if not isinstance(keyring.get_keyring(), keyring.backends.fail.Keyring):
         KEYRING_AVAILABLE = True
@@ -114,7 +115,6 @@ def cli(no_broadcast, verbose):
     ch.setLevel(getattr(logging, verbosity.upper()))
     ch.setFormatter(formatter)
     log.addHandler(ch)
-    debug = verbose > 0
     hv = Hive(
         nobroadcast=no_broadcast,
     )
@@ -333,8 +333,9 @@ def nftparams():
     t = PrettyTable(["key", "value"])
     t.align = "l"
     params = nfts.get_nft_params()
-    for key in params:
-        t.add_row([key, str(params[key])])
+    if params:
+        for key in params:
+            t.add_row([key, str(params[key])])
     print(t)
 
 
@@ -453,6 +454,8 @@ def nft(symbol, nftid):
 
         for _id in range(max_id):
             nft_obj = nft.get_id(int(_id) + 1)
+            if nft_obj is None:
+                continue
             ident = ""
             for g in groupBy:
                 if g in nft_obj["properties"] and nft_obj["properties"][g] is not None:
@@ -473,6 +476,8 @@ def nft(symbol, nftid):
         t.align = "l"
         for _id in nftid:
             nft_obj = nft.get_id(int(_id))
+            if nft_obj is None:
+                continue
             t.add_row(
                 [
                     _id,
@@ -493,6 +498,9 @@ def richlist(symbol, top):
     token = Token(symbol)
     holder = token.get_holder()
     market_info = token.get_market_info()
+    if market_info is None:
+        print("Market info for %s not found" % symbol)
+        return
     last_price = float(market_info["lastPrice"])
     sorted_holder = sorted(holder, key=lambda account: float(account["balance"]), reverse=True)
     t = PrettyTable(["Balance", "Account", "Value [HIVE]"])
@@ -544,6 +552,8 @@ def transfer(to, amount, token, memo, memos, account):
             if amount == 0:
                 continue
             token_obj = tokens.get_token(token)
+            if token_obj is None:
+                continue
             market_info = token_obj.get_market_info()
             if market_info is None:
                 print("transfer  %.8f %s to %s?" % (amount, token, to))
@@ -576,7 +586,13 @@ def transfer(to, amount, token, memo, memos, account):
             return
         tokens = Tokens()
         token_obj = tokens.get_token(token)
+        if token_obj is None:
+            print("Token %s not found" % token)
+            return
         market_info = token_obj.get_market_info()
+        if market_info is None:
+            print("Market info for %s not found" % token)
+            return
         last_price = float(market_info["lastPrice"])
         highest_bid = float(market_info["highestBid"])
         if highest_bid == 0:
@@ -648,7 +664,7 @@ def stake(amount, token, account, receiver):
             if amount == 0:
                 continue
             token_obj = tokens.get_token(token)
-            if not token_obj["stakingEnabled"]:
+            if token_obj is None or not token_obj["stakingEnabled"]:
                 continue
             market_info = token_obj.get_market_info()
             if market_info is None:
@@ -680,10 +696,13 @@ def stake(amount, token, account, receiver):
             return
         tokens = Tokens()
         token_obj = tokens.get_token(token)
-        if not token_obj["stakingEnabled"]:
+        if token_obj is None or not token_obj["stakingEnabled"]:
             print("%s is not stakable" % token)
             return
         market_info = token_obj.get_market_info()
+        if market_info is None:
+            print("Market info for %s not found" % token)
+            return
         last_price = float(market_info["lastPrice"])
         highest_bid = float(market_info["highestBid"])
         if highest_bid == 0:
@@ -730,7 +749,7 @@ def unstake(amount, token, account):
             if stake == 0:
                 continue
             token_obj = tokens.get_token(token)
-            if not token_obj["stakingEnabled"]:
+            if token_obj is None or not token_obj["stakingEnabled"]:
                 continue
             market_info = token_obj.get_market_info()
             if market_info is None:
@@ -762,10 +781,13 @@ def unstake(amount, token, account):
             return
         tokens = Tokens()
         token_obj = tokens.get_token(token)
-        if not token_obj["stakingEnabled"]:
+        if token_obj is None or not token_obj["stakingEnabled"]:
             print("%s is not stakable" % token)
             return
         market_info = token_obj.get_market_info()
+        if market_info is None:
+            print("Cannot fetch market info for %s" % token)
+            return
         last_price = float(market_info["lastPrice"])
         highest_bid = float(market_info["highestBid"])
         if highest_bid == 0:
@@ -899,6 +921,8 @@ def sell(amount, token, price, account):
             if amount == 0:
                 continue
             token_obj = tokens.get_token(token)
+            if token_obj is None:
+                continue
             market_info = token_obj.get_market_info()
             if market_info is None:
                 continue
@@ -935,7 +959,13 @@ def sell(amount, token, price, account):
             return
         tokens = Tokens()
         token_obj = tokens.get_token(token)
+        if token_obj is None:
+            print("Token %s not found" % token)
+            return
         market_info = token_obj.get_market_info()
+        if market_info is None:
+            print("Market info for %s not found" % token)
+            return
         last_price = float(market_info["lastPrice"])
         highest_bid = float(market_info["highestBid"])
         if highest_bid == 0:
@@ -984,6 +1014,8 @@ def balance(account):
         amount = float(t["balance"])
         stake = float(t["stake"])
         token_obj = tokens.get_token(token)
+        if token_obj is None:
+            continue
         market_info = token_obj.get_market_info()
         if market_info is None:
             continue
@@ -1276,6 +1308,8 @@ def nftsellbook(
         hive_price = round(float(order["hive_price"]), 3)
         if grouping in nft.properties and value is None:
             nftId = nft.get_id(int(order["nftId"]))
+            if nftId is None:
+                continue
             nft_name = nftId["properties"][grouping]
             # print(nftId)
         elif grouping in nft.properties and value is not None:
@@ -1284,6 +1318,8 @@ def nftsellbook(
             nft_name = grouping_value
         else:
             nftId = nft.get_id(int(order["nftId"]))
+            if nftId is None:
+                continue
             nft_name = ""
             for g in nft["groupBy"]:
                 if g in nftId["properties"]:
@@ -1319,7 +1355,7 @@ def nftsellbook(
             return
         if ret in ["p", "change price"]:
             newprice = input("Enter new price: ")
-            tx = market.change_price(symbol, account, list(nft_ids), newprice)
+            tx = market.change_price(symbol, account, list(nft_ids), float(newprice))
             tx = json.dumps(tx, indent=4)
             print(tx)
         elif ret in ["c", "cancel"]:
@@ -1350,7 +1386,6 @@ def nftopen(symbol, grouping, value, price_symbol):
         print("Please set a Hive node")
         return
     market = NftMarket(blockchain_instance=hv)
-    nft = Nft(symbol)
     grouping_name = None
     grouping_value = None
     if value is not None and grouping is not None:
@@ -1383,7 +1418,6 @@ def nfttrades(symbol, account):
         return
     market = NftMarket(blockchain_instance=hv)
     if symbol is not None:
-        nft = Nft(symbol)
         trades_history = market.get_trades_history(symbol, account)
         new_trades_history = []
         market_info = {}
@@ -1403,7 +1437,7 @@ def nfttrades(symbol, account):
         t = PrettyTable(["date", "account", "from", "Nfts", "price", "priceSymbol", "est. HIVE"])
         t.align = "l"
         t._max_width = {"from": 16, "Nfts": 20}
-        row_sum = ["Sum: ", "", "", 0, "", "", 0]
+        row_sum: List[Any] = ["Sum: ", "", "", 0, "", "", 0]
         for order in new_trades_history:
             hive_price = round(float(order["hive_price"]), 3)
             date = datetime.fromtimestamp(order["timestamp"])
@@ -1435,7 +1469,6 @@ def nfttrades(symbol, account):
         t = PrettyTable(["Symbol", "Sold NFTs", "est. HIVE sum"])
         t.align = "l"
         for s in symbol:
-            nft = Nft(s)
             trades_history = market.get_trades_history(s, account)
             new_trades_history = []
             hive_sum = 0
@@ -1491,6 +1524,8 @@ def nftbuy(symbol, nft_ids, account, market_account, yes):
     nft = Nft(symbol)
     for _id in nft_ids:
         obj = nft.get_id(int(_id))
+        if obj is None:
+            continue
         t.add_row([obj["_id"], obj["previousAccount"], obj["properties"]])
     print("Buy the following nfts (buy is only sucesfully when wallet balance is sufficient):")
     print(t)
@@ -1533,6 +1568,8 @@ def nftsell(symbol, nft_ids, price, price_symbol, account, fee, yes):
     nft = Nft(symbol)
     for _id in nft_ids:
         obj = nft.get_id(int(_id))
+        if obj is None:
+            continue
         t.add_row([obj["_id"], obj["account"], obj["properties"]])
     print(
         "Create a sell order for %.3f %s with a %.2f %% fee on:"
@@ -1572,6 +1609,8 @@ def nftchangeprice(symbol, nft_ids, newprice, account, yes):
     nft = Nft(symbol)
     for _id in nft_ids:
         obj = nft.get_id(int(_id))
+        if obj is None:
+            continue
         t.add_row([obj["_id"], obj["previousAccount"], obj["properties"]])
     print("Change price of following nfts to %s:" % newprice)
     print(t)
@@ -1607,6 +1646,8 @@ def nftcancel(symbol, nft_ids, account, yes):
     nft = Nft(symbol)
     for _id in nft_ids:
         obj = nft.get_id(int(_id))
+        if obj is None:
+            continue
         t.add_row([obj["_id"], obj["previousAccount"], obj["properties"]])
     print("Canceling selling of following nfts:")
     print(t)
@@ -1621,7 +1662,8 @@ def nftcancel(symbol, nft_ids, account, yes):
 
 if __name__ == "__main__":
     if getattr(sys, "frozen", False):
-        os.environ["SSL_CERT_FILE"] = os.path.join(sys._MEIPASS, "lib", "cert.pem")
+        # type: ignore[attr-defined]
+        os.environ["SSL_CERT_FILE"] = os.path.join(sys._MEIPASS, "lib", "cert.pem")  # type: ignore[attr-defined]
         cli(sys.argv[1:])
     else:
         cli()

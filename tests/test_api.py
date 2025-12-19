@@ -21,12 +21,14 @@ class Testcases(unittest.TestCase):
         self.assertTrue(len(result) > 0)
 
         result = api.get_contract("tokens")
+        assert result is not None
         self.assertTrue(len(result) > 0)
 
         result = api.find("tokens", "tokens")
         self.assertTrue(len(result) > 0)
 
         result = api.find_one("tokens", "tokens")
+        assert result is not None
         self.assertTrue(len(result) > 0)
 
         result = api.get_history("thecrazygm", "INCOME")
@@ -82,7 +84,7 @@ class ApiFallbackTests(unittest.TestCase):
         self.assertEqual(first_rpc.someMethod.call_count, 2)
         self.assertEqual(second_rpc.someMethod.call_count, 1)
 
-    @patch("nectarengine.api.requests.get")
+    @patch("nectarengine.api.httpx.get")
     @patch("nectarengine.api.RPC")
     def test_get_history_retries_history_endpoint(self, mock_rpc: Mock, mock_get: Mock):
         fail_response = Mock()

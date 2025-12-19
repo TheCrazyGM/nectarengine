@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Union, cast
 
-import requests
+import httpx
 
 from .nodeslist import Node, Nodes
 from .rpc import RPC, RPCError, RPCErrorDoRetry
@@ -23,12 +23,12 @@ def _ensure_trailing_slash(url: str) -> str:
     return url if url.endswith("/") else url + "/"
 
 
-def _iterable_node_inputs(value: NodeInput) -> Iterable[Union[str, Node, Dict[str, Any]]]:
+def _iterable_node_inputs(value: NodeInput) -> Sequence[Union[str, Node, Dict[str, Any]]]:
     if isinstance(value, (list, tuple)):
         return cast(Sequence[Union[str, Node, Dict[str, Any]]], value)
     if isinstance(value, Nodes):
         return list(value)
-    return (value,)
+    return cast(Sequence[Union[str, Node, Dict[str, Any]]], [value])
 
 
 def _normalize_node_inputs(value: Optional[NodeInput]) -> List[str]:
@@ -104,7 +104,7 @@ class _RPCPool:
                     return rpc_method(*args, **kwargs)
                 except RPCError:
                     raise
-                except (RPCErrorDoRetry, requests.RequestException, ValueError) as exc:
+                except (RPCErrorDoRetry, httpx.HTTPError, ValueError) as exc:
                     last_exc = exc
                     log.warning(
                         "RPC endpoint %s failed (attempt %s/%s on node %s/%s): %s",
@@ -177,14 +177,6 @@ class Api:
                 log.warning("Failed to fetch beacon nodes: %s", exc)
 
         if not endpoint_candidates:
-            if nodes_helper is None:
-                nodes_helper = Nodes(auto_refresh=False)
-            try:
-                endpoint_candidates.extend(nodes_helper.as_urls())
-            except Exception as exc:  # pragma: no cover - network/chain failures
-                log.warning("Unable to load FlowerEngine metadata nodes: %s", exc)
-
-        if not endpoint_candidates:
             endpoint_candidates.append(_DEFAULT_RPC_URL)
 
         endpoints = _deduplicate_preserve_order(endpoint_candidates)
@@ -226,10 +218,10 @@ class Api:
             "symbol": symbol,
         }
         history_endpoint = f"{self.history_url}accountHistory"
-        response = requests.get(history_endpoint, params=params)
+        response = httpx.get(history_endpoint, params=params)
         cnt2 = 0
         while response.status_code != 200 and cnt2 < self._history_retry_limit:
-            response = requests.get(history_endpoint, params=params)
+            response = httpx.get(history_endpoint, params=params)
             cnt2 += 1
         return response.json()
 
@@ -351,13 +343,71 @@ class Api:
         """Get an array of objects that match the query from the table of the specified contract"""
         limit = 1000
         offset = 0
-        last_result: List[Dict[str, Any]] = []
-        cnt = 0
         result: List[Dict[str, Any]] = []
-        while last_result is not None and len(last_result) == limit or cnt == 0:
-            cnt += 1
-            last_result = self.find(contract_name, table_name, query, limit=limit, offset=offset)
-            if last_result is not None:
-                result += last_result
+
+        # Initial fetch
+        batch = self.find(contract_name, table_name, query, limit=limit, offset=0)
+        if not batch:
+            return []
+
+        result.extend(batch)
+
+        while len(batch) == limit:
+            # Prepare next query with last_id
+            last_id = batch[-1].get("_id")
+            if not last_id:
+                # Fallback to offset if no _id found (shouldn't happen on standard tables)
                 offset += limit
+                batch = self.find(contract_name, table_name, query, limit=limit, offset=offset)
+            else:
+                # Merge _id filter into query
+                next_query = query.copy()
+                next_query["_id"] = {"$gt": last_id}
+                batch = self.find(contract_name, table_name, next_query, limit=limit, offset=0)
+
+            if batch:
+                result.extend(batch)
+            else:
+                break
+
         return result
+
+    def find_many(
+        self,
+        contract_name: str,
+        table_name: str,
+        query: Optional[Dict[str, Any]] = None,
+        limit: int = 1000,
+        offset: int = 0,
+        last_id: Optional[str] = None,
+        indexes: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Get an array of objects that match the query, supporting last_id for efficient pagination.
+        This mirrors the 'findMany' functionality in hiveenginepy.
+        """
+        if query is None:
+            query = {}
+        if indexes is None:
+            indexes = []
+        query_copy = query.copy()
+        if last_id:
+            if "_id" in query_copy and isinstance(query_copy["_id"], dict):
+                query_copy["_id"]["$gt"] = last_id
+            elif "_id" in query_copy:
+                # _id is already present but not a dict condition, complex case.
+                # Assuming simple equality was intended, override with range check?
+                # For safety, let's just make it a $gt check if possible or fail if conflict.
+                # Standard practice matches hiveenginepy: force the $gt check logic.
+                query_copy["_id"] = {"$gt": last_id}
+            else:
+                query_copy["_id"] = {"$gt": last_id}
+
+        return self.find(
+            contract_name,
+            table_name,
+            query=query_copy,
+            limit=limit,
+            offset=offset,
+            indexes=indexes,
+        )
