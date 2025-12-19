@@ -1029,7 +1029,7 @@ def balance(account):
         stake_hive = price * stake
         sum_amount += balance_hive
         sum_staked += stake_hive
-        if token_obj is not None and token_obj["stakingEnabled"]:
+        if token_obj["stakingEnabled"]:
             table.add_row([token, amount, stake, "%.3f" % balance_hive, "%.3f" % stake_hive])
         else:
             table.add_row([token, amount, stake, "%.3f" % balance_hive, "-"])

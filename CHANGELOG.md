@@ -13,7 +13,7 @@
 ## 0.2.0
 
 - Migrated network layer from `requests` to `httpx` for better performance and modern standards.
-- Enhanced `find_all` pagination to use `last_id` based recursion, improving reliability for large datasets.
+- Enhanced `find_all` pagination to use `last_id`-based recursion, improving reliability for large datasets.
 - Silenced noisy `httpx` logs by default.
 
 ## 0.1.4
