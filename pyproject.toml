@@ -24,7 +24,7 @@ classifiers = [
 dependencies = [
     "click-shell>=2.1",
     "hive-nectar",
-    "httpx",
+    "httpx>=0.27.0",
 ]
 
 [project.urls]

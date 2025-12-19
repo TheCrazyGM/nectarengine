@@ -23,11 +23,15 @@ class Nfts(list):
         return tokens
 
     def get_nft_params(self) -> Optional[Dict[str, Any]]:
-        """Returns all available nft as list"""
+        """Returns NFT parameters as a dictionary, or None if not found"""
         tokens = self.api.find_one("nft", "params", query={})
-        if isinstance(tokens, list) and len(tokens) > 0:
-            tokens = tokens[0]
-        return tokens
+        if isinstance(tokens, list):
+            if len(tokens) > 0:
+                return tokens[0]
+            return None
+        if isinstance(tokens, dict):
+            return tokens
+        return None
 
     def get_symbol_list(self) -> List[str]:
         symbols: List[str] = []
