@@ -1,6 +1,10 @@
 """Utilities for working with the Hive Engine node benchmark metadata."""
 
+import hashlib
 import json
+import os
+import tempfile
+import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Union, overload
 
@@ -8,6 +12,8 @@ import httpx
 
 _BEACON_HE_NODES_URL = "https://beacon.peakd.com/api/he/nodes"
 _BEACON_HE_HISTORY_NODES_URL = "https://beacon.peakd.com/api/heh/nodes"
+
+CACHE_DURATION = 300  # 5 minutes cache
 
 NodeUrlList = List[str]
 
@@ -122,14 +128,47 @@ class Nodes(Sequence[Node]):
         return iter(self.node_list())
 
     def _fetch_beacon_nodes(self, url: str, limit: Optional[int], timeout: int) -> List[Node]:
-        try:
-            response = httpx.get(url, timeout=timeout)
-            response.raise_for_status()
-            payload = response.json()
-        except httpx.HTTPError as exc:
-            raise RuntimeError(f"Unable to reach beacon service: {exc}") from exc
-        except json.JSONDecodeError as exc:
-            raise RuntimeError("Beacon API returned invalid JSON payload") from exc
+        # Generate cache filename based on URL hash
+        url_hash = hashlib.md5(url.encode()).hexdigest()
+        cache_file = os.path.join(tempfile.gettempdir(), f"nectarengine_cache_{url_hash}.json")
+        current_time = time.time()
+
+        payload = None
+
+        # Try to load from disk cache
+        if os.path.exists(cache_file):
+            try:
+                mtime = os.path.getmtime(cache_file)
+                if current_time - mtime < CACHE_DURATION:
+                    with open(cache_file, "r") as f:
+                        payload = json.load(f)
+            except (IOError, json.JSONDecodeError):
+                pass  # Fallback to fetch
+
+        if payload is None:
+            try:
+                response = httpx.get(url, timeout=timeout)
+                response.raise_for_status()
+                payload = response.json()
+
+                # Save to disk cache
+                try:
+                    with open(cache_file, "w") as f:
+                        json.dump(payload, f)
+                except IOError:
+                    pass  # Ignore cache write errors
+            except httpx.HTTPError as exc:
+                # If fetch fails, try to fallback to expired cache
+                if os.path.exists(cache_file):
+                    try:
+                        with open(cache_file, "r") as f:
+                            payload = json.load(f)
+                    except (IOError, json.JSONDecodeError):
+                        raise RuntimeError(f"Unable to reach beacon service: {exc}") from exc
+                else:
+                    raise RuntimeError(f"Unable to reach beacon service: {exc}") from exc
+            except json.JSONDecodeError as exc:
+                raise RuntimeError("Beacon API returned invalid JSON payload") from exc
 
         if not isinstance(payload, list):
             raise RuntimeError("Beacon API returned unexpected structure; expected list")
